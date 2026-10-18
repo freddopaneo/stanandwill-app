@@ -11,6 +11,8 @@ import { ILLUSTRATIONS } from "../../lib/album";
  * bandeau foncé en haut avec le logo centré et « Stan & Will » dessous, kicker « Prévention santé par race »,
  * photo de Stan et Will en carte arrondie à cheval sur le bandeau, trois promesses, bouton miel.
  */
+const FADE = [0.92, 0.8, 0.66, 0.52, 0.38, 0.26, 0.15, 0.07, 0.02];
+
 export default function Welcome() {
   const router = useRouter();
   const { height, width } = useWindowDimensions();
@@ -19,20 +21,24 @@ export default function Welcome() {
 
   return (
     <View style={s.root}>
-      <View style={[s.band, compact && { height: 200 }]}>
-        <SafeAreaView edges={["top"]} style={{ alignItems: "center", width: "100%" }}>
+      <View style={s.band}>
+        <SafeAreaView edges={["top"]} style={{ alignItems: "center", width: "100%", backgroundColor: colors.foretFonce, paddingBottom: 14 }}>
           <Pressable onPress={() => router.push("/(onboarding)/auth")} style={s.account} accessibilityRole="button">
             <Text style={s.accountText}>J'ai un compte</Text>
           </Pressable>
           <Image source={require("../../assets/icon.png")} style={[s.logo, compact && { width: 56, height: 56, borderRadius: 16 }]} accessibilityIgnoresInvertColors />
           <Text style={[s.brand, compact && { fontSize: 22 }]}>Stan & Will</Text>
-          <Text style={s.kicker}>Prévention santé par race</Text>
+          <Text style={s.kicker}>L'application de prévention santé par race</Text>
         </SafeAreaView>
+        {/* Dégradé vert forêt → crème (sans dépendance native) */}
+        <View style={s.fade} pointerEvents="none">
+          {FADE.map((o, i) => <View key={i} style={{ flex: 1, backgroundColor: colors.foretFonce, opacity: o }} />)}
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={s.scroll} bounces={false} showsVerticalScrollIndicator={false}>
-        <View style={[s.card, { width: cardW, height: compact ? 240 : 300 }]}>
-          <Image source={ILLUSTRATIONS.welcome} style={{ width: cardW, height: compact ? 240 : 300 }} resizeMode="cover" accessibilityLabel="Stan et Will assis devant la porte, prêts pour la balade" />
+        <View style={[s.card, { width: cardW, height: compact ? 220 : 270 }]}>
+          <Image source={ILLUSTRATIONS.welcome} style={{ width: cardW, height: compact ? 220 : 270 }} resizeMode="cover" accessibilityLabel="Stan et Will assis devant la porte, prêts pour la balade" />
           <View style={s.shade} />
           <View style={s.cardText}>
             <Text style={s.cardTitle}>Les compagnons malins de votre chien</Text>
@@ -74,23 +80,24 @@ function Tile({ tint, title, body, glyph }: { tint: string; title: string; body:
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.creme },
-  band: { backgroundColor: colors.foretFonce, height: 236, alignItems: "center", paddingTop: 0 },
+  band: { backgroundColor: colors.creme, alignItems: "center" },
+  fade: { height: 36, width: "100%" },
   account: { position: "absolute", right: 16, top: 6, minHeight: 44, justifyContent: "center", paddingHorizontal: 10 },
   accountText: { fontFamily: fonts.bold, fontSize: 13, color: colors.saugeClair },
-  logo: { width: 68, height: 68, borderRadius: 20, marginTop: 8, shadowColor: "#000", shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
-  brand: { fontFamily: fonts.black, fontSize: 26, letterSpacing: -0.4, color: colors.creme, marginTop: 10 },
-  kicker: { fontFamily: fonts.black, fontSize: 11, letterSpacing: 1.6, textTransform: "uppercase", color: colors.miel, marginTop: 6 },
-  scroll: { flexGrow: 1, paddingHorizontal: 20, paddingBottom: 22, marginTop: -56 },
+  logo: { width: 60, height: 60, borderRadius: 18, marginTop: 4, shadowColor: "#000", shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
+  brand: { fontFamily: fonts.black, fontSize: 24, letterSpacing: -0.4, color: colors.creme, marginTop: 8 },
+  kicker: { fontFamily: fonts.black, fontSize: 11, letterSpacing: 1.2, textTransform: "uppercase", color: colors.miel, marginTop: 5, textAlign: "center", paddingHorizontal: 24 },
+  scroll: { flexGrow: 1, paddingHorizontal: 20, paddingBottom: 22, paddingTop: 4 },
   card: { borderRadius: 26, overflow: "hidden", shadowColor: colors.foretFonce, shadowOpacity: 0.28, shadowRadius: 22, shadowOffset: { width: 0, height: 12 }, elevation: 10, backgroundColor: colors.foretFonce },
   shade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 140, backgroundColor: "rgba(20,41,31,0.55)" },
   cardText: { position: "absolute", left: 18, right: 18, bottom: 16 },
   cardTitle: { fontFamily: fonts.black, fontSize: 24, lineHeight: 27, letterSpacing: -0.5, color: colors.creme },
   cardSub: { fontFamily: fonts.bold, fontSize: 13, color: colors.saugeClair, marginTop: 5 },
   tiles: { flexDirection: "row", gap: 10, marginTop: 16 },
-  tile: { flex: 1, backgroundColor: colors.blanc, borderWidth: 1, borderColor: colors.ligne, borderRadius: 18, padding: 10, gap: 7 },
+  tile: { flex: 1, backgroundColor: colors.blanc, borderWidth: 1, borderColor: colors.ligne, borderRadius: 18, padding: 10, gap: 7, alignItems: "center" },
   tileIcon: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  tileTitle: { fontFamily: fonts.black, fontSize: 13, lineHeight: 16, color: colors.foretFonce },
-  tileBody: { fontFamily: fonts.regular, fontSize: 11.5, lineHeight: 15, color: colors.texteDoux },
+  tileTitle: { fontFamily: fonts.black, fontSize: 13, lineHeight: 16, color: colors.foretFonce, textAlign: "center" },
+  tileBody: { fontFamily: fonts.regular, fontSize: 11.5, lineHeight: 15, color: colors.texteDoux, textAlign: "center" },
   lead: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: colors.texteDoux, marginTop: 14 },
   under: { fontFamily: fonts.bold, fontSize: 13, color: colors.foret, textAlign: "center", marginTop: 10 },
   album: { fontFamily: fonts.bold, fontSize: 12, color: colors.texteDoux, textAlign: "center", textDecorationLine: "underline" },
