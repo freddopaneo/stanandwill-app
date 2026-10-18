@@ -42,7 +42,7 @@ export default function Welcome() {
           <View style={s.shade} />
           <View style={s.cardText}>
             <Text style={s.cardTitle}>Les compagnons malins de votre chien</Text>
-            <Text style={s.cardSub}>Stan, 7 ans, poil dur · Will, 3 ans, poil ras</Text>
+            <Text style={s.cardSub}>Stan, 7 ans · Will, 3 ans</Text>
           </View>
         </View>
 
@@ -89,10 +89,10 @@ const s = StyleSheet.create({
   kicker: { fontFamily: fonts.black, fontSize: 11, letterSpacing: 1.2, textTransform: "uppercase", color: colors.miel, marginTop: 5, textAlign: "center", paddingHorizontal: 24 },
   scroll: { flexGrow: 1, paddingHorizontal: 20, paddingBottom: 22, paddingTop: 4 },
   card: { borderRadius: 26, overflow: "hidden", shadowColor: colors.foretFonce, shadowOpacity: 0.28, shadowRadius: 22, shadowOffset: { width: 0, height: 12 }, elevation: 10, backgroundColor: colors.foretFonce },
-  shade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 140, backgroundColor: "rgba(20,41,31,0.55)" },
-  cardText: { position: "absolute", left: 18, right: 18, bottom: 16 },
-  cardTitle: { fontFamily: fonts.black, fontSize: 24, lineHeight: 27, letterSpacing: -0.5, color: colors.creme },
-  cardSub: { fontFamily: fonts.bold, fontSize: 13, color: colors.saugeClair, marginTop: 5 },
+  shade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 64, backgroundColor: "rgba(20,41,31,0.5)" },
+  cardText: { position: "absolute", left: 14, right: 14, bottom: 10, alignItems: "center" },
+  cardTitle: { fontFamily: fonts.black, fontSize: 16, lineHeight: 20, letterSpacing: -0.2, color: colors.creme, textAlign: "center" },
+  cardSub: { fontFamily: fonts.bold, fontSize: 12, color: colors.saugeClair, marginTop: 2, textAlign: "center" },
   tiles: { flexDirection: "row", gap: 10, marginTop: 16 },
   tile: { flex: 1, backgroundColor: colors.blanc, borderWidth: 1, borderColor: colors.ligne, borderRadius: 18, padding: 10, gap: 7, alignItems: "center" },
   tileIcon: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
