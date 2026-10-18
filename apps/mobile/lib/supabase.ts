@@ -14,4 +14,4 @@ export const supabase = createClient(url || "https://placeholder.supabase.co", a
 });
 
 /** URL de l'API serveur (fonctions Next.js : score, scan, assistant). */
-export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "https://stanandwill.netlify.app";
+export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "https://stanandwill-dopaneo.vercel.app";
