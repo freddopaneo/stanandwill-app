@@ -11,6 +11,7 @@ import { colors, fonts, radius } from "../../lib/theme";
 import { ILLUSTRATIONS } from "../../lib/album";
 import { WalkShareCard, CARD_W } from "../../components/WalkShareCard";
 import { shareViewAsImage } from "../../lib/share";
+import { WeatherCard } from "../../components/WeatherCard";
 
 const DAY_LETTERS = ["D", "L", "M", "M", "J", "V", "S"];
 
@@ -101,6 +102,8 @@ export default function Balades() {
           <Small style={{ marginTop: 10 }}>{goal.note}</Small>
           {streak > 1 && <View style={{ marginTop: 10 }}><Pill label={`🔥 ${streak} jours d'affilée`} tone="miel" /></View>}
         </Card>
+
+        <WeatherCard dog={dog} compact />
 
         {/* Balade en cours / démarrer */}
         {live ? (
