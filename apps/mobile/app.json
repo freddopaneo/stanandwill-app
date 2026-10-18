@@ -1,0 +1,83 @@
+{
+  "expo": {
+    "name": "Stan & Will",
+    "slug": "stanandwill",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "be.pixglass.stanandwill",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Stan & Will utilise l'appareil photo pour scanner les croquettes et photographier ce que votre chien réclame.",
+        "NSPhotoLibraryUsageDescription": "Pour choisir la photo de profil de votre chien et ses documents."
+      }
+    },
+    "android": {
+      "package": "be.pixglass.stanandwill",
+      "adaptiveIcon": {
+        "backgroundColor": "#1E5B45",
+        "foregroundImage": "./assets/adaptive-icon.png"
+      },
+      "permissions": [
+        "CAMERA",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "scheme": "stanandwill",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1E5B45"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Stan & Will utilise l'appareil photo pour scanner les croquettes et les aliments."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Pour la photo de profil de votre chien."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#1E5B45"
+        }
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./node_modules/@expo-google-fonts/nunito/400Regular/Nunito_400Regular.ttf",
+            "./node_modules/@expo-google-fonts/nunito/700Bold/Nunito_700Bold.ttf",
+            "./node_modules/@expo-google-fonts/nunito/800ExtraBold/Nunito_800ExtraBold.ttf"
+          ]
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Stan & Will mesure la distance de la balade pour estimer l'activité de votre chien. Votre position n'est jamais partagée précisément."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    }
+  }
+}
