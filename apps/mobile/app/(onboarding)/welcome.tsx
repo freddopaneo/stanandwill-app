@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Image, StyleSheet, Text, ScrollView, Pressable, useWindowDimensions } from "react-native";
 import { useRouter } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button } from "../../components/ui";
 import { colors, fonts, radius } from "../../lib/theme";
 import { ILLUSTRATIONS } from "../../lib/album";
@@ -16,6 +16,7 @@ const FADE = [0.92, 0.8, 0.66, 0.52, 0.38, 0.26, 0.15, 0.07, 0.02];
 export default function Welcome() {
   const router = useRouter();
   const { height, width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const compact = height < 760; // iPhone SE / mini
   const cardW = width - 40;
 
@@ -23,7 +24,7 @@ export default function Welcome() {
     <View style={s.root}>
       <View style={s.band}>
         <SafeAreaView edges={["top"]} style={{ alignItems: "center", width: "100%", backgroundColor: colors.foretFonce, paddingBottom: 14 }}>
-          <Pressable onPress={() => router.push("/(onboarding)/auth")} style={s.account} accessibilityRole="button">
+          <Pressable onPress={() => router.push("/(onboarding)/auth")} style={[s.account, { top: insets.top + 4 }]} accessibilityRole="button">
             <Text style={s.accountText}>J'ai un compte</Text>
           </Pressable>
           <Image source={require("../../assets/icon.png")} style={[s.logo, compact && { width: 56, height: 56, borderRadius: 16 }]} accessibilityIgnoresInvertColors />
@@ -41,7 +42,7 @@ export default function Welcome() {
           <Image source={ILLUSTRATIONS.welcome} style={{ width: cardW, height: compact ? 220 : 270 }} resizeMode="cover" accessibilityLabel="Stan et Will assis devant la porte, prêts pour la balade" />
           <View style={s.shade} />
           <View style={s.cardText}>
-            <Text style={s.cardTitle}>Les compagnons malins de votre chien</Text>
+            <Text style={s.cardTitle} numberOfLines={1} adjustsFontSizeToFit>Les compagnons malins de votre chien</Text>
             <Text style={s.cardSub}>Stan, 7 ans · Will, 3 ans</Text>
           </View>
         </View>
@@ -82,15 +83,15 @@ const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.creme },
   band: { backgroundColor: colors.creme, alignItems: "center" },
   fade: { height: 36, width: "100%" },
-  account: { position: "absolute", right: 16, top: 6, minHeight: 44, justifyContent: "center", paddingHorizontal: 10 },
+  account: { position: "absolute", right: 12, minHeight: 44, justifyContent: "center", paddingHorizontal: 10 },
   accountText: { fontFamily: fonts.bold, fontSize: 13, color: colors.saugeClair },
   logo: { width: 60, height: 60, borderRadius: 18, marginTop: 4, shadowColor: "#000", shadowOpacity: 0.35, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
   brand: { fontFamily: fonts.black, fontSize: 24, letterSpacing: -0.4, color: colors.creme, marginTop: 8 },
   kicker: { fontFamily: fonts.black, fontSize: 11, letterSpacing: 1.2, textTransform: "uppercase", color: colors.miel, marginTop: 5, textAlign: "center", paddingHorizontal: 24 },
   scroll: { flexGrow: 1, paddingHorizontal: 20, paddingBottom: 22, paddingTop: 4 },
   card: { borderRadius: 26, overflow: "hidden", shadowColor: colors.foretFonce, shadowOpacity: 0.28, shadowRadius: 22, shadowOffset: { width: 0, height: 12 }, elevation: 10, backgroundColor: colors.foretFonce },
-  shade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 64, backgroundColor: "rgba(20,41,31,0.5)" },
-  cardText: { position: "absolute", left: 14, right: 14, bottom: 10, alignItems: "center" },
+  shade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 80, backgroundColor: "rgba(20,41,31,0.55)" },
+  cardText: { position: "absolute", left: 14, right: 14, bottom: 12, alignItems: "center" },
   cardTitle: { fontFamily: fonts.black, fontSize: 16, lineHeight: 20, letterSpacing: -0.2, color: colors.creme, textAlign: "center" },
   cardSub: { fontFamily: fonts.bold, fontSize: 12, color: colors.saugeClair, marginTop: 2, textAlign: "center" },
   tiles: { flexDirection: "row", gap: 10, marginTop: 16 },
