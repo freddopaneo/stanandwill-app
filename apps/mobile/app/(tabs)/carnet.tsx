@@ -221,6 +221,7 @@ export default function Carnet() {
             <Card style={{ marginTop: 12 }}>
               <H2>À propos</H2>
               <Small style={{ marginTop: 4 }}>Stan & Will est édité par Pixglass SRL (Belgique). L'app ne pose pas de diagnostic et ne remplace pas une consultation. Les réponses de l'assistant sont générées par une IA dans un cadre validé par un vétérinaire référent. Version 0.1 · score {score.algoVersion}.</Small>
+              <View style={{ marginTop: 12 }}><Button title="Notre album : qui sont Stan et Will ?" variant="secondary" onPress={() => router.push("/album")} /></View>
               <View style={{ marginTop: 12 }}><Button title="Refaire le bilan" variant="ghost" onPress={() => Alert.alert("Refaire le bilan", "Les réponses du quiz seront remplacées. Les pesées et événements sont conservés.", [{ text: "Annuler", style: "cancel" }, { text: "Continuer", onPress: () => { setAnswers(answersFromDog(dog)); router.push("/(onboarding)/quiz/0"); } }])} /></View>
             </Card>
           </>

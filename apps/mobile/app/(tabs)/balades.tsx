@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable, Text, TextInput, Alert } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable, Text, TextInput, Alert, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ageMonthsFrom, dailyGoal, dailyStats, streakDays, fmtDistance, fmtDuration, sizeClass, type WalkInput } from "@stanandwill/core";
@@ -8,6 +8,7 @@ import { WalkTracker, manualWalk, type LiveWalk } from "../../lib/walks";
 import { Button, Card, H1, H2, P, Pill, Small } from "../../components/ui";
 import { DogSwitcher } from "../../components/DogSwitcher";
 import { colors, fonts, radius } from "../../lib/theme";
+import { ILLUSTRATIONS } from "../../lib/album";
 
 const DAY_LETTERS = ["D", "L", "M", "M", "J", "V", "S"];
 
@@ -151,6 +152,14 @@ export default function Balades() {
           </Card>
         </Pressable>
 
+        {walks.length === 0 && !live && (
+          <View style={s.illu}>
+            <Image source={ILLUSTRATIONS.baladesEmpty} style={s.illuImg} resizeMode="cover" accessibilityLabel="Stan et Will en balade dans les dunes" />
+            <View style={s.illuShade} />
+            <Text style={s.illuText}>Première balade ? Stan et Will montrent l'exemple : on sort, on renifle, on compte les pas.</Text>
+          </View>
+        )}
+
         {/* Historique */}
         {walks.length > 0 && (
           <>
@@ -195,4 +204,8 @@ const s = StyleSheet.create({
   boxOn: { backgroundColor: colors.foret, borderColor: colors.foret },
   input: { flex: 1, borderWidth: 1.5, borderColor: colors.ligne, borderRadius: radius.md, paddingHorizontal: 14, minHeight: 50, fontFamily: fonts.regular, fontSize: 16, color: colors.texte, backgroundColor: colors.blanc },
   bar: { width: 22, borderRadius: 6 },
+  illu: { marginTop: 22, borderRadius: radius.xl, overflow: "hidden", height: 200 },
+  illuImg: { width: "100%", height: 200 },
+  illuShade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 110, backgroundColor: "rgba(20,41,31,0.6)" },
+  illuText: { position: "absolute", left: 16, right: 16, bottom: 14, fontFamily: fonts.bold, fontSize: 14, lineHeight: 19, color: colors.creme },
 });

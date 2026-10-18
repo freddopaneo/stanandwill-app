@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable, Text, TextInput, Alert, Platform } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable, Text, TextInput, Alert, Platform, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { breedInfo } from "@stanandwill/core";
@@ -8,6 +8,7 @@ import { supabaseConfigured } from "../lib/supabase";
 import * as S from "../lib/social";
 import { Button, Card, Choice, H1, H2, P, Pill, Small } from "../components/ui";
 import { colors, fonts, radius } from "../lib/theme";
+import { ILLUSTRATIONS } from "../lib/album";
 
 type View3 = "pres" | "demandes" | "balades";
 const SIZE_LABEL: Record<string, string> = { toy: "très petit", small: "petit", medium: "moyen", large: "grand" };
@@ -47,6 +48,7 @@ export default function Copains() {
     return (
       <SafeAreaView style={s.safe} edges={["top"]}><ScrollView contentContainerStyle={s.body}>
         {back}<H1>Copains de balade</H1>
+        <View style={s.illu}><Image source={ILLUSTRATIONS.copains} style={s.illuImg} resizeMode="cover" accessibilityLabel="Stan et Will avec leur copine Perle" /><View style={s.illuShade} /><Text style={s.illuText}>Stan, Will et leur copine Perle : les balades sont meilleures à plusieurs.</Text></View>
         <Card style={{ marginTop: 16 }}>
           <P>Pour voir les maîtres près de chez vous et proposer des balades, il faut un compte (gratuit, e-mail seulement).</P>
           <P style={{ marginTop: 8 }}>Ce que les autres verront : votre prénom, votre commune, les créneaux où vous sortez, et la fiche de vos chiens. Jamais votre adresse ni votre e-mail.</P>
@@ -299,4 +301,8 @@ const s = StyleSheet.create({
   chipTxt: { fontFamily: fonts.bold, fontSize: 13, color: colors.foretFonce },
   box: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: colors.sauge, alignItems: "center", justifyContent: "center" },
   boxOn: { backgroundColor: colors.foret, borderColor: colors.foret },
+  illu: { marginTop: 14, borderRadius: radius.xl, overflow: "hidden", height: 180 },
+  illuImg: { width: "100%", height: 180 },
+  illuShade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 90, backgroundColor: "rgba(20,41,31,0.6)" },
+  illuText: { position: "absolute", left: 16, right: 16, bottom: 12, fontFamily: fonts.bold, fontSize: 14, lineHeight: 19, color: colors.creme },
 });
