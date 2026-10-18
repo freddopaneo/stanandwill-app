@@ -53,8 +53,9 @@ export default function Welcome() {
           <Tile tint={colors.saugeClair} title="Copains de balade" body="Des maîtres près de chez vous" glyph="🐕‍🦺" />
         </View>
 
+        <Text style={s.claim}>Chaque race a ses fragilités. Prenez-les de vitesse.</Text>
         {!compact && (
-          <Text style={s.lead}>Teckel, bouledogue, chihuahua, spitz, cavalier et toutes les autres races : des conseils relus par des vétérinaires, jamais de diagnostic.</Text>
+          <Text style={s.lead}>Sa fiche en 3 minutes, son bilan de vigilance tout de suite, puis le bon geste chaque semaine.</Text>
         )}
 
         <View style={{ flex: 1, minHeight: 12 }} />
@@ -99,7 +100,8 @@ const s = StyleSheet.create({
   tileIcon: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   tileTitle: { fontFamily: fonts.black, fontSize: 13, lineHeight: 16, color: colors.foretFonce, textAlign: "center" },
   tileBody: { fontFamily: fonts.regular, fontSize: 11.5, lineHeight: 15, color: colors.texteDoux, textAlign: "center" },
-  lead: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: colors.texteDoux, marginTop: 14 },
+  claim: { fontFamily: fonts.black, fontSize: 19, lineHeight: 24, letterSpacing: -0.3, color: colors.foretFonce, textAlign: "center", marginTop: 16 },
+  lead: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: colors.texteDoux, textAlign: "center", marginTop: 6 },
   under: { fontFamily: fonts.bold, fontSize: 13, color: colors.foret, textAlign: "center", marginTop: 10 },
   album: { fontFamily: fonts.bold, fontSize: 12, color: colors.texteDoux, textAlign: "center", textDecorationLine: "underline" },
 });
