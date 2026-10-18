@@ -1,14 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable, Text, TextInput, Alert, Image } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable, Text, TextInput, Alert, Image, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { ageMonthsFrom, dailyGoal, dailyStats, streakDays, fmtDistance, fmtDuration, sizeClass, type WalkInput } from "@stanandwill/core";
+import { ageMonthsFrom, dailyGoal, dailyStats, streakDays, fmtDistance, fmtDuration, sizeClass, type WalkInput, type WalkSummary } from "@stanandwill/core";
 import { useStore } from "../../lib/store";
 import { WalkTracker, manualWalk, type LiveWalk } from "../../lib/walks";
 import { Button, Card, H1, H2, P, Pill, Small } from "../../components/ui";
 import { DogSwitcher } from "../../components/DogSwitcher";
 import { colors, fonts, radius } from "../../lib/theme";
 import { ILLUSTRATIONS } from "../../lib/album";
+import { WalkShareCard, CARD_W } from "../../components/WalkShareCard";
+import { shareViewAsImage } from "../../lib/share";
 
 const DAY_LETTERS = ["D", "L", "M", "M", "J", "V", "S"];
 
@@ -25,6 +27,9 @@ export default function Balades() {
   const [manualMin, setManualMin] = useState("");
   const [showManual, setShowManual] = useState(false);
   const tracker = useRef<WalkTracker | null>(null);
+  const cardRef = useRef<View>(null);
+  const [shareWalk, setShareWalk] = useState<WalkSummary | null>(null);
+  const [sharing, setSharing] = useState(false);
 
   const input: WalkInput = useMemo(() => dog ? { breedId: dog.breed_id, size: dog.size, weightKg: dog.weightKg, ageMonths: ageMonthsFrom(dog.birth_month ?? undefined) } : {}, [dog]);
   const goal = useMemo(() => dailyGoal(input), [input]);
@@ -48,6 +53,15 @@ export default function Balades() {
     tracker.current = null; setLive(null);
     if (!w) { Alert.alert("Balade trop courte", "Moins d'une minute : rien n'a été enregistré."); return; }
     addWalk(w);
+    setShareWalk(w);
+  };
+
+  const doShare = async () => {
+    if (!shareWalk) return;
+    setSharing(true);
+    const ok = await shareViewAsImage(cardRef, `stanandwill-balade-${shareWalk.id}`, `${dog?.name} a fait ${shareWalk.stepsEst.toLocaleString("fr-FR")} pas avec Stan & Will`);
+    setSharing(false);
+    if (!ok) Alert.alert("Partage indisponible", "Relancez l'app : la brique de capture n'a pas pu se charger.");
   };
 
   const saveManual = () => {
@@ -172,7 +186,9 @@ export default function Balades() {
                       <P style={{ fontFamily: fonts.bold }}>{new Date(w.startedAt).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })} · {new Date(w.startedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</P>
                       <Small>{fmtDuration(w.durationS)} · {fmtDistance(w.distanceM)} · ≈ {w.stepsEst.toLocaleString("fr-FR")} pas</Small>
                     </View>
-                    <Pill label={w.source === "gps" ? "GPS" : w.source === "manual" ? "Saisie" : "Minuteur"} />
+                    <Pressable onPress={() => setShareWalk(w)} accessibilityRole="button" accessibilityLabel="Partager cette balade" style={{ minHeight: 44, minWidth: 44, alignItems: "center", justifyContent: "center" }}>
+                      <Text style={{ fontSize: 20 }}>↗️</Text>
+                    </Pressable>
                   </View>
                 </Card>
               </Pressable>
@@ -182,6 +198,27 @@ export default function Balades() {
         )}
         <Small style={{ marginTop: 22, textAlign: "center" }}>Les pas sont une estimation indicative (foulée moyenne de la race), pas une mesure médicale.</Small>
       </ScrollView>
+
+      <Modal visible={!!shareWalk} animationType="slide" transparent onRequestClose={() => setShareWalk(null)}>
+        <View style={s.sheetBack}>
+          <View style={s.sheet}>
+            <H2 style={{ textAlign: "center" }}>Belle balade ! 🐾</H2>
+            <Small style={{ textAlign: "center", marginTop: 4 }}>Partagez la carte de {dog.name} : c'est aussi comme ça qu'on trouve des copains.</Small>
+            {shareWalk && (
+              <View style={{ alignItems: "center", marginTop: 14 }}>
+                <View style={{ transform: [{ scale: Math.min(1, (320) / CARD_W) }], marginVertical: -20 }}>
+                  <WalkShareCard ref={cardRef} walk={shareWalk} dogName={dog.name} photo={dog.photo_path ? { uri: dog.photo_path } : ILLUSTRATIONS.baladesEmpty}
+                    goalMinutes={goal.minutes} goalHit={today.durationS >= goal.minutes * 60} streak={streak} />
+                </View>
+              </View>
+            )}
+            <View style={{ marginTop: 18, gap: 8 }}>
+              <Button title="Partager la carte" onPress={doShare} loading={sharing} />
+              <Button title="Fermer" variant="ghost" onPress={() => setShareWalk(null)} />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -204,6 +241,8 @@ const s = StyleSheet.create({
   boxOn: { backgroundColor: colors.foret, borderColor: colors.foret },
   input: { flex: 1, borderWidth: 1.5, borderColor: colors.ligne, borderRadius: radius.md, paddingHorizontal: 14, minHeight: 50, fontFamily: fonts.regular, fontSize: 16, color: colors.texte, backgroundColor: colors.blanc },
   bar: { width: 22, borderRadius: 6 },
+  sheetBack: { flex: 1, backgroundColor: "rgba(20,41,31,0.55)", justifyContent: "flex-end" },
+  sheet: { backgroundColor: colors.creme, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: 34 },
   illu: { marginTop: 22, borderRadius: radius.xl, overflow: "hidden", height: 200 },
   illuImg: { width: "100%", height: 200 },
   illuShade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 110, backgroundColor: "rgba(20,41,31,0.6)" },
