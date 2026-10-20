@@ -71,6 +71,9 @@ interface Store {
   /** Heure du rappel quotidien (5–22), null = désactivé */
   notifHour: number | null;
   setNotifHour: (h: number | null) => void;
+  /** Heure du rappel « pas encore sorti » (12, 17, 18 ou 19), null = désactivé */
+  walkHour: number | null;
+  setWalkHour: (h: number | null) => void;
   waitlist: WaitlistEntry | null;
   setWaitlist: (w: WaitlistEntry | null) => void;
   /** Compatibilité : `setDog(d)` = addDog si nouveau, updateActiveDog sinon ; `setDog(null)` ne fait rien. */
@@ -179,7 +182,7 @@ export function mergeRemote(local: DogRecord[], remote: RemoteRecord[]): DogReco
   return out;
 }
 
-interface Saved { answers: QuizAnswers; dogs: DogRecord[]; activeDogId: string | null; premium: boolean; waitlist: WaitlistEntry | null; notifHour?: number | null; lastSyncAt?: string | null }
+interface Saved { answers: QuizAnswers; dogs: DogRecord[]; activeDogId: string | null; premium: boolean; waitlist: WaitlistEntry | null; notifHour?: number | null; walkHour?: number | null; lastSyncAt?: string | null }
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -189,6 +192,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [premium, setPremiumState] = useState(false);
   const [waitlist, setWaitlistState] = useState<WaitlistEntry | null>(null);
   const [notifHour, setNotifHourState] = useState<number | null>(8);
+  const [walkHour, setWalkHourState] = useState<number | null>(18);
   const [ready, setReady] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
@@ -222,6 +226,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           setPremiumState(Boolean(saved.premium)); setWaitlistState(saved.waitlist ?? null);
           if (saved.notifHour !== undefined) setNotifHourState(saved.notifHour);
           setLastSyncAt(saved.lastSyncAt ?? null);
+          if (saved.walkHour !== undefined) setWalkHourState(saved.walkHour);
         }
       } catch {}
       if (supabaseConfigured) {
@@ -239,6 +244,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       premium: next.premium ?? premium, waitlist: next.waitlist === undefined ? waitlist : next.waitlist,
       notifHour: next.notifHour === undefined ? notifHour : next.notifHour,
       lastSyncAt: next.lastSyncAt === undefined ? lastSyncAt : next.lastSyncAt,
+      walkHour: next.walkHour === undefined ? walkHour : next.walkHour,
     };
     AsyncStorage.setItem(KEY, JSON.stringify(payload)).catch(() => {});
   };
@@ -320,6 +326,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     done: active?.done ?? {},
     notifHour,
     setNotifHour: (h) => { setNotifHourState(h); persist({ notifHour: h }); },
+    walkHour,
+    setWalkHour: (h) => { setWalkHourState(h); persist({ walkHour: h }); },
     completeItem: (id, opts) => {
       if (!active) return;
       updateRecord(active.dog.id, (r) => {
@@ -380,9 +388,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     addEvent: (e) => { if (active) updateRecord(active.dog.id, (r) => ({ ...r, events: [...r.events, { ...e, id: "ev-" + Date.now(), date: e.date ?? new Date().toISOString() }] })); },
     resetAll: async () => {
       await AsyncStorage.multiRemove([KEY, LEGACY_KEY]).catch(() => {});
-      setA({}); setDogs([]); setActiveId(null); setPremiumState(false); setWaitlistState(null); setNotifHourState(8); setLastSyncAt(null); setLastSyncError(null);
+      setA({}); setDogs([]); setActiveId(null); setPremiumState(false); setWaitlistState(null); setNotifHourState(8); setWalkHourState(18); setLastSyncAt(null); setLastSyncError(null);
     },
-  }), [session, answers, dogs, active, score, premium, ready, waitlist, activeDogId, notifHour, syncing, lastSyncAt, lastSyncError, signedIn, syncNow, pullNow]);
+  }), [session, answers, dogs, active, score, premium, ready, waitlist, activeDogId, notifHour, walkHour, syncing, lastSyncAt, lastSyncError, signedIn, syncNow, pullNow]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

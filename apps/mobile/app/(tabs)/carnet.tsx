@@ -23,7 +23,7 @@ const GESTURES: { key: string; label: string }[] = [
  */
 export default function Carnet() {
   const router = useRouter();
-  const { dog, score, weights, events, walks, addWeight, addEvent, resetAll, session, premium, dogs, removeDog, setAnswers, resetAnswers, notifHour, setNotifHour, syncStatus, syncing, syncNow } = useStore();
+  const { dog, score, weights, events, walks, addWeight, addEvent, resetAll, session, premium, dogs, removeDog, setAnswers, resetAnswers, notifHour, setNotifHour, walkHour, setWalkHour, syncStatus, syncing, syncNow } = useStore();
   const [kg, setKg] = useState("");
   const [tab, setTab] = useState<"suivi" | "urgence" | "reglages">("suivi");
   if (!dog || !score) return null;
@@ -205,6 +205,17 @@ export default function Carnet() {
                 {[null, 7, 8, 9, 12, 18, 20].map((h) => (
                   <Pressable key={String(h)} onPress={() => setNotifHour(h)} style={[s.chip, notifHour === h && { backgroundColor: colors.foret }]}>
                     <Text style={[s.chipText, notifHour === h && { color: colors.blanc }]}>{h == null ? "Désactivé" : `${h} h`}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </Card>
+            <Card style={{ marginTop: 12 }}>
+              <H2>Rappel de balade</H2>
+              <Small style={{ marginTop: 4 }}>Si {dog.name} n'est pas encore sorti à cette heure-là, un seul rappel dans la journée. Aucun rappel si une balade est déjà enregistrée.</Small>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+                {[null, 12, 17, 18, 19].map((h) => (
+                  <Pressable key={String(h)} onPress={() => setWalkHour(h)} style={[s.chip, walkHour === h && { backgroundColor: colors.foret }]} accessibilityRole="radio" accessibilityState={{ selected: walkHour === h }}>
+                    <Text style={[s.chipText, walkHour === h && { color: colors.blanc }]}>{h == null ? "Désactivé" : `${h} h`}</Text>
                   </Pressable>
                 ))}
               </View>

@@ -36,3 +36,27 @@ export async function scheduleDaily(hour: number | null, dogName: string, itemTi
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute: 0, channelId: "daily" } as any,
   });
 }
+
+// ——— Rappel « pas encore sorti » (au plus 1 par jour) ———
+const WALK_PREFIX = "sw-walk-";
+
+/**
+ * Replanifie les rappels de balade des 7 prochains jours. Appelée à l'ouverture de l'app et à chaque balade
+ * enregistrée : le rappel du jour disparaît dès qu'une balade existe. `dates` vient de walkReminderDates (core).
+ */
+export async function scheduleWalkReminders(dates: Date[], text: { title: string; body: string }) {
+  const all = await Notifications.getAllScheduledNotificationsAsync().catch(() => [] as Notifications.NotificationRequest[]);
+  await Promise.all(all.filter((n) => n.identifier.startsWith(WALK_PREFIX)).map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier).catch(() => {})));
+  if (!dates.length) return;
+  if (!(await ensurePermission())) return;
+  if (Platform.OS === "android") {
+    await Notifications.setNotificationChannelAsync("walks", { name: "Rappel de balade", importance: Notifications.AndroidImportance.DEFAULT });
+  }
+  for (const d of dates) {
+    await Notifications.scheduleNotificationAsync({
+      identifier: WALK_PREFIX + d.toISOString().slice(0, 10),
+      content: { title: text.title, body: text.body, data: { route: "/(tabs)/balades" } },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: d, channelId: "walks" } as any,
+    }).catch(() => {});
+  }
+}
