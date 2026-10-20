@@ -8,14 +8,14 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "be.pixglass.stanandwill",
+      "bundleIdentifier": "be.eurecadesign.stanandwill",
       "infoPlist": {
         "NSCameraUsageDescription": "Stan & Will utilise l'appareil photo pour scanner les croquettes et photographier ce que votre chien réclame.",
         "NSPhotoLibraryUsageDescription": "Pour choisir la photo de profil de votre chien et ses documents."
       }
     },
     "android": {
-      "package": "be.pixglass.stanandwill",
+      "package": "be.eurecadesign.stanandwill",
       "adaptiveIcon": {
         "backgroundColor": "#1E5B45",
         "foregroundImage": "./assets/adaptive-icon.png"

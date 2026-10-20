@@ -1,7 +1,7 @@
 /**
  * « Notre album » — Stan (poil dur, 7 ans) et Will (poil ras, 3 ans), les deux teckels qui ont inspiré l'app.
  * Photos recompressées (1400 px max) et nettoyées de leurs métadonnées EXIF (aucune géolocalisation embarquée).
- * Les mêmes photos servent d'illustrations : accueil, états vides des onglets, écran Copains.
+ * Les mêmes photos servent d'illustrations : accueil, états vides des onglets.
  */
 import type { ImageSourcePropType } from "react-native";
 
@@ -33,7 +33,6 @@ export const photo = (id: string) => ALBUM.find((p) => p.id === id)!.src;
 export const ILLUSTRATIONS = {
   welcome: photo("p01"),
   baladesEmpty: photo("p04"),
-  copains: photo("p09"),
   carnetEmpty: photo("p14"),
   aujourdhui: photo("p13"),
 } as const;

@@ -50,7 +50,7 @@ export default function Welcome() {
         <View style={s.tiles}>
           <Tile tint={colors.saugeClair} title="Bilan de vigilance" body="Les risques de sa race, par âge et poids" glyph="🛡️" />
           <Tile tint="#FCEBC2" title="Balades comptées" body="Ses pas estimés, son objectif du jour" glyph="🐾" />
-          <Tile tint={colors.saugeClair} title="Copains de balade" body="Des maîtres près de chez vous" glyph="🐕‍🦺" />
+          <Tile tint={colors.saugeClair} title="Scanner malin" body="Peut-il manger ça ? Réponse immédiate" glyph="📷" />
         </View>
 
         <Text style={s.claim}>Chaque race a ses fragilités. Prenez-les de vitesse.</Text>

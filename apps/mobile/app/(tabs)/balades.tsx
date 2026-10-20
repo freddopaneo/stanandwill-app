@@ -17,12 +17,12 @@ const DAY_LETTERS = ["D", "L", "M", "M", "J", "V", "S"];
 
 /**
  * Onglet Balades : démarrer/arrêter une balade (GPS ou minuteur), pas estimés selon la taille du chien,
- * objectif du jour, 7 derniers jours, série, historique. Entrée vers « Copains de balade ».
+ * objectif du jour, 7 derniers jours, série, historique, carte de fin de balade partageable.
  * Confidentialité : la trace GPS n'est jamais conservée ni envoyée ; seul le résumé est enregistré.
  */
 export default function Balades() {
   const router = useRouter();
-  const { dog, walks, addWalk, removeWalk, session } = useStore();
+  const { dog, walks, addWalk, removeWalk } = useStore();
   const [live, setLive] = useState<LiveWalk | null>(null);
   const [useGps, setUseGps] = useState(true);
   const [manualMin, setManualMin] = useState("");
@@ -155,20 +155,6 @@ export default function Balades() {
           </View>
         </Card>
 
-        {/* Copains */}
-        <Pressable onPress={() => router.push("/copains")} style={{ marginTop: 22 }}>
-          <Card style={{ backgroundColor: colors.saugeClair, borderColor: colors.sauge }}>
-            <View style={s.row}>
-              <View style={{ flex: 1 }}>
-                <H2>Copains de balade</H2>
-                <P style={{ marginTop: 4 }}>Trouvez d'autres maîtres près de chez vous et proposez une balade à deux (ou dix) chiens.</P>
-                {!session && <Small style={{ marginTop: 6 }}>Nécessite un compte gratuit.</Small>}
-              </View>
-              <Text style={{ fontSize: 28 }}>🐕‍🦺</Text>
-            </View>
-          </Card>
-        </Pressable>
-
         {walks.length === 0 && !live && (
           <View style={s.illu}>
             <Image source={ILLUSTRATIONS.baladesEmpty} style={s.illuImg} resizeMode="cover" accessibilityLabel="Stan et Will en balade dans les dunes" />
@@ -206,7 +192,7 @@ export default function Balades() {
         <View style={s.sheetBack}>
           <View style={s.sheet}>
             <H2 style={{ textAlign: "center" }}>Belle balade ! 🐾</H2>
-            <Small style={{ textAlign: "center", marginTop: 4 }}>Partagez la carte de {dog.name} : c'est aussi comme ça qu'on trouve des copains.</Small>
+            <Small style={{ textAlign: "center", marginTop: 4 }}>Partagez la carte de {dog.name} avec vos proches, ou gardez-la en souvenir.</Small>
             {shareWalk && (
               <View style={{ alignItems: "center", marginTop: 14 }}>
                 <View style={{ transform: [{ scale: Math.min(1, (320) / CARD_W) }], marginVertical: -20 }}>

@@ -1,6 +1,6 @@
 # Stan & Will — application mobile
 
-Compagnon de prévention santé pour chiens, par race (teckel en premier). Éditeur : Pixglass SRL.
+Compagnon de prévention santé pour chiens, par race (teckel en premier). Éditeur : Eureca Design SRL.
 Palette « Forêt et miel », logo B « Sous le bouclier ».
 
 ## Ce que contient ce dépôt
@@ -36,17 +36,21 @@ le score se calcule localement, l'abonnement est simulé en développement.
 
 Vérifications : `npm test` (9 tests du score) et `npm run typecheck` depuis la racine.
 
-## Comptes à ouvrir au nom de Pixglass (dans cet ordre)
+## Comptes à ouvrir au nom d'Eureca Design (dans cet ordre)
 
 | Compte | Pour quoi | Coût | À faire |
 |---|---|---|---|
 | **Supabase** (région Frankfurt) | base de données, comptes utilisateurs, photos | 0 € puis 25 $/mois (Pro) | Créer le projet, puis SQL Editor → coller `supabase/migrations/0001_init.sql`, puis `supabase/seed.sql`. Copier l'URL et la clé « anon public » dans `apps/mobile/.env`. Activer l'auth e-mail (OTP). Signer le DPA. |
 | **Expo (EAS)** | compilation iOS/Android, mises à jour | 0 € puis 19 $/mois | `npx eas login`, puis `npx eas build:configure`. |
-| **Apple Developer** | App Store | 99 $/an | Inscription au nom de Pixglass (numéro D-U-N-S nécessaire, 1 à 2 semaines). |
-| **Google Play Console** | Android | 25 $ une fois | Compte organisation Pixglass. |
+| **Apple Developer** | App Store | 99 $/an | Inscription au nom d'Eureca Design (numéro D-U-N-S nécessaire, 1 à 2 semaines). |
+| **Google Play Console** | Android | 25 $ une fois | Compte organisation Eureca Design. |
 | **RevenueCat** | abonnements unifiés, paywall, webhooks | 0 € jusqu'à 2 500 $/mois de revenus | Créer les produits `sw_annual_4999`, `sw_monthly_999`, `sw_weekly_699` et l'entitlement `premium` (identiques dans App Store Connect et Play Console). |
-| **Stripe** | paiement web (hors stores) | 1,5 % + 0,25 € par transaction | Compte Pixglass, lié au site Next.js. |
+| **Stripe** | paiement web (hors stores) | 1,5 % + 0,25 € par transaction | Compte Eureca Design, lié au site Next.js. |
 | **Anthropic (API Claude)** | scanner et assistant, côté serveur uniquement | à l'usage (~0,02 € par réponse) | Clé stockée dans Netlify, jamais dans l'app. |
+
+## Décision du 20 octobre 2026
+
+Pas de fonction sociale « copains de balade » : l'app reste centrée sur la prévention et le bien-être du chien (aucun risque de dérive vers une app de rencontre). Les tables `walk_profiles`, `walk_dogs`, `walk_requests`, `walk_meetups`, `walk_meetup_members`, `walk_reports` sont supprimées par la migration `0003_drop_social.sql`.
 
 ## Prochaines étapes de développement
 
