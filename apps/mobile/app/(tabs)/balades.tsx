@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { View, ScrollView, StyleSheet, Pressable, Text, TextInput, Alert, Image, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { ageMonthsFrom, dailyGoal, dailyStats, streakDays, fmtDistance, fmtDuration, sizeClass, type WalkInput, type WalkSummary } from "@stanandwill/core";
+import { ageMonthsFrom, dailyGoal, dailyStats, streakDays, fmtDistance, fmtDuration, sizeClass, evaluateBadges, newlyEarned, weeklyChallenge, type Badge, type BadgeContext, type WalkInput, type WalkSummary } from "@stanandwill/core";
 import { useStore } from "../../lib/store";
 import { WalkTracker, manualWalk, type LiveWalk } from "../../lib/walks";
 import { Button, Card, H1, H2, P, Pill, Small } from "../../components/ui";
@@ -12,6 +12,7 @@ import { ILLUSTRATIONS } from "../../lib/album";
 import { WalkShareCard, CARD_W } from "../../components/WalkShareCard";
 import { shareViewAsImage } from "../../lib/share";
 import { WeatherCard } from "../../components/WeatherCard";
+import { BadgesGrid, ChallengeCard, NewBadgesBanner } from "../../components/BadgesSection";
 
 const DAY_LETTERS = ["D", "L", "M", "M", "J", "V", "S"];
 
@@ -22,7 +23,7 @@ const DAY_LETTERS = ["D", "L", "M", "M", "J", "V", "S"];
  */
 export default function Balades() {
   const router = useRouter();
-  const { dog, walks, addWalk, removeWalk } = useStore();
+  const { dog, walks, weights, events, addWalk, removeWalk } = useStore();
   const [live, setLive] = useState<LiveWalk | null>(null);
   const [useGps, setUseGps] = useState(true);
   const [manualMin, setManualMin] = useState("");
@@ -31,12 +32,19 @@ export default function Balades() {
   const cardRef = useRef<View>(null);
   const [shareWalk, setShareWalk] = useState<WalkSummary | null>(null);
   const [sharing, setSharing] = useState(false);
+  const [fresh, setFresh] = useState<Badge[]>([]);
 
   const input: WalkInput = useMemo(() => dog ? { breedId: dog.breed_id, size: dog.size, weightKg: dog.weightKg, ageMonths: ageMonthsFrom(dog.birth_month ?? undefined) } : {}, [dog]);
   const goal = useMemo(() => dailyGoal(input), [input]);
   const week = useMemo(() => dailyStats(walks, 7), [walks]);
   const today = week[6];
   const streak = useMemo(() => streakDays(walks), [walks]);
+  const badgeCtx: BadgeContext = useMemo(() => ({
+    breedId: dog?.breed_id, goalMinutes: goal.minutes, weighCount: weights.length,
+    gestureCount: new Set(events.filter((e) => e.kind === "gesture").map((e) => e.title)).size,
+  }), [dog?.breed_id, goal.minutes, weights.length, events]);
+  const badges = useMemo(() => evaluateBadges(walks, badgeCtx), [walks, badgeCtx]);
+  const challenge = useMemo(() => weeklyChallenge(walks, badgeCtx), [walks, badgeCtx]);
 
   useEffect(() => () => { tracker.current?.stop("x"); }, []);
   if (!dog) return null;
@@ -53,6 +61,12 @@ export default function Balades() {
     const w = t.stop(dog.id);
     tracker.current = null; setLive(null);
     if (!w) { Alert.alert("Balade trop courte", "Moins d'une minute : rien n'a été enregistré."); return; }
+    record(w);
+  };
+
+  /** Enregistre la balade et repère les badges qu'elle débloque (affichés dans la feuille de fin). */
+  const record = (w: WalkSummary) => {
+    setFresh(newlyEarned(badges, evaluateBadges([...walks, w], badgeCtx)));
     addWalk(w);
     setShareWalk(w);
   };
@@ -68,7 +82,7 @@ export default function Balades() {
   const saveManual = () => {
     const m = parseInt(manualMin, 10);
     if (!m || m < 1 || m > 600) { Alert.alert("Durée invalide", "Entrez une durée en minutes, ex. 25"); return; }
-    addWalk(manualWalk(dog.id, m, input)); setManualMin(""); setShowManual(false);
+    record(manualWalk(dog.id, m, input)); setManualMin(""); setShowManual(false);
   };
 
   const liveMin = live ? live.durationS : 0;
@@ -104,6 +118,8 @@ export default function Balades() {
         </Card>
 
         <WeatherCard dog={dog} compact />
+
+        <ChallengeCard c={challenge} dogName={dog.name} />
 
         {/* Balade en cours / démarrer */}
         {live ? (
@@ -155,6 +171,8 @@ export default function Balades() {
           </View>
         </Card>
 
+        <BadgesGrid badges={badges} />
+
         {walks.length === 0 && !live && (
           <View style={s.illu}>
             <Image source={ILLUSTRATIONS.baladesEmpty} style={s.illuImg} resizeMode="cover" accessibilityLabel="Stan et Will en balade dans les dunes" />
@@ -175,7 +193,7 @@ export default function Balades() {
                       <P style={{ fontFamily: fonts.bold }}>{new Date(w.startedAt).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })} · {new Date(w.startedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</P>
                       <Small>{fmtDuration(w.durationS)} · {fmtDistance(w.distanceM)} · ≈ {w.stepsEst.toLocaleString("fr-FR")} pas</Small>
                     </View>
-                    <Pressable onPress={() => setShareWalk(w)} accessibilityRole="button" accessibilityLabel="Partager cette balade" style={{ minHeight: 44, minWidth: 44, alignItems: "center", justifyContent: "center" }}>
+                    <Pressable onPress={() => { setFresh([]); setShareWalk(w); }} accessibilityRole="button" accessibilityLabel="Partager cette balade" style={{ minHeight: 44, minWidth: 44, alignItems: "center", justifyContent: "center" }}>
                       <Text style={{ fontSize: 20 }}>↗️</Text>
                     </Pressable>
                   </View>
@@ -188,11 +206,12 @@ export default function Balades() {
         <Small style={{ marginTop: 22, textAlign: "center" }}>Les pas sont une estimation indicative (foulée moyenne de la race), pas une mesure médicale.</Small>
       </ScrollView>
 
-      <Modal visible={!!shareWalk} animationType="slide" transparent onRequestClose={() => setShareWalk(null)}>
+      <Modal visible={!!shareWalk} animationType="slide" transparent onRequestClose={() => { setShareWalk(null); setFresh([]); }}>
         <View style={s.sheetBack}>
           <View style={s.sheet}>
             <H2 style={{ textAlign: "center" }}>Belle balade ! 🐾</H2>
             <Small style={{ textAlign: "center", marginTop: 4 }}>Partagez la carte de {dog.name} avec vos proches, ou gardez-la en souvenir.</Small>
+            <NewBadgesBanner badges={fresh} />
             {shareWalk && (
               <View style={{ alignItems: "center", marginTop: 14 }}>
                 <View style={{ transform: [{ scale: Math.min(1, (320) / CARD_W) }], marginVertical: -20 }}>
@@ -203,7 +222,7 @@ export default function Balades() {
             )}
             <View style={{ marginTop: 18, gap: 8 }}>
               <Button title="Partager la carte" onPress={doShare} loading={sharing} />
-              <Button title="Fermer" variant="ghost" onPress={() => setShareWalk(null)} />
+              <Button title="Fermer" variant="ghost" onPress={() => { setShareWalk(null); setFresh([]); }} />
             </View>
           </View>
         </View>
