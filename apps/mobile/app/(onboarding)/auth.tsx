@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase, supabaseConfigured } from "../../lib/supabase";
 import { useStore } from "../../lib/store";
-import { syncDogToCloud } from "../../lib/sync";
 import { Button, Card, H1, P, Small } from "../../components/ui";
 import { colors, fonts, radius } from "../../lib/theme";
 
@@ -15,7 +14,7 @@ import { colors, fonts, radius } from "../../lib/theme";
  */
 export default function Auth() {
   const router = useRouter();
-  const { dog, dogs, premium } = useStore();
+  const { dog, pullNow, syncNow } = useStore();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [code, setCode] = useState("");
@@ -44,17 +43,22 @@ export default function Auth() {
     try {
       const now = new Date().toISOString();
       await supabase.from("profiles").update({ consent_marketing: news, consent_ai_notice_at: now, consents_updated_at: now }).eq("id", data.session.user.id);
-      for (const r of dogs) await syncDogToCloud(r.dog, premium);
     } catch {}
+    // Carnet cloud : on récupère d'abord ce qui existe déjà sur le compte (autre téléphone), puis on envoie ce téléphone.
+    let count = 0;
+    try { count = await pullNow(); await syncNow(); } catch {}
     setBusy(false);
+    if (count === 0) { router.replace("/(onboarding)/quiz/0"); return; }
     router.replace("/(tabs)/aujourdhui");
   };
 
   return (
     <SafeAreaView style={s.safe}>
       <ScrollView contentContainerStyle={s.body} keyboardShouldPersistTaps="handled">
-        <H1>Gardons le bilan de {dog?.name ?? "votre chien"}</H1>
-        <P style={{ marginTop: 10 }}>Un compte, c'est votre carnet retrouvé sur un nouveau téléphone, et une fiche d'urgence partageable. Pas de mot de passe : un code à 6 chiffres par e-mail.</P>
+        <H1>{dog ? `Gardons le bilan de ${dog.name}` : "Retrouvons votre carnet"}</H1>
+        <P style={{ marginTop: 10 }}>{dog
+          ? "Un compte, c'est votre carnet retrouvé sur un nouveau téléphone, et une fiche d'urgence partageable. Pas de mot de passe : un code à 6 chiffres par e-mail."
+          : "Entrez l'adresse de votre compte : vos chiens, pesées, événements et balades reviennent sur ce téléphone. Pas de mot de passe : un code à 6 chiffres par e-mail."}</P>
 
         {!sent ? (
           <Card style={{ marginTop: 20 }}>

@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { AppState } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Session } from "@supabase/supabase-js";
 import { supabase, supabaseConfigured } from "./supabase";
-import { computeScore, breedInfo, ageMonthsFrom, type QuizAnswers, type ScoreResult, type BreedProfile, type WalkSummary } from "@stanandwill/core";
-import { pushWalkToCloud } from "./sync";
+import { computeScore, breedInfo, ageMonthsFrom, addIds, removeIds, mergeById, stableHash, emptySyncState, syncLabel, type QuizAnswers, type ScoreResult, type BreedProfile, type WalkSummary, type SyncState } from "@stanandwill/core";
+import { pushRecord, pullAll, archiveCloudDog, dogPayload, weightId, type PushDelta, type RemoteRecord } from "./sync";
 
 export interface Dog {
   id: string; name: string; breed_id: string; variety?: string | null; size?: string | null; sex?: "male" | "female" | null;
@@ -12,7 +13,7 @@ export interface Dog {
   insurance?: "yes" | "no" | "thinking" | null; main_worry?: string | null; photo_path?: string | null; weightKg?: number | null;
 }
 
-export interface WeightEntry { date: string; kg: number }
+export interface WeightEntry { id?: string; date: string; kg: number }
 export interface WaitlistEntry { breedId: string; email: string; sentAt: string; synced: boolean }
 export interface HealthEvent { id: string; date: string; kind: "vaccine" | "deworm" | "vet" | "symptom" | "gesture" | "note"; title: string; note?: string }
 
@@ -25,6 +26,8 @@ export interface DogRecord {
   planStartedOn?: string;
   /** items du plan réalisés : id → { at, correct? } */
   done?: Record<string, { at: string; correct?: boolean }>;
+  /** Carnet cloud : identifiant serveur, éléments déjà envoyés, suppressions en attente */
+  sync?: SyncState;
 }
 
 /** Nombre de chiens inclus dans l'abonnement standard (argument commercial : multi-chiens sans surcoût). */
@@ -73,6 +76,13 @@ interface Store {
   /** Compatibilité : `setDog(d)` = addDog si nouveau, updateActiveDog sinon ; `setDog(null)` ne fait rien. */
   setDog: (d: Dog | null) => void;
   ready: boolean;
+  /** Carnet cloud : envoie tout de suite les nouveautés (après connexion, au retour dans l'app) */
+  syncNow: () => Promise<void>;
+  /** Carnet cloud : récupère les carnets du compte et les fusionne avec ce téléphone */
+  pullNow: () => Promise<number>;
+  syncing: boolean;
+  /** phrase d'état affichée dans le Carnet */
+  syncStatus: string;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -117,7 +127,59 @@ function scoreOf(r: DogRecord): ScoreResult {
   return computeScore(dogToInput(r.dog, last?.kg ?? null, { daysSinceWeigh, gestures }));
 }
 
-interface Saved { answers: QuizAnswers; dogs: DogRecord[]; activeDogId: string | null; premium: boolean; waitlist: WaitlistEntry | null; notifHour?: number | null }
+/** Applique le résultat d'un envoi sans écraser ce qui a été ajouté pendant l'envoi. */
+function applyDelta(r: DogRecord, d: PushDelta): DogRecord {
+  const cur = r.sync ?? emptySyncState();
+  const changed = d.cloudId || d.profileHash || d.pushedAdd.weights.length || d.pushedAdd.events.length || d.pushedAdd.walks.length || d.deletesDone.walks.length || d.deletesDone.events.length;
+  if (!changed) return r;
+  return {
+    ...r,
+    sync: {
+      ...cur,
+      cloudId: d.cloudId ?? cur.cloudId,
+      profileHash: d.profileHash ?? cur.profileHash,
+      pushed: {
+        weights: addIds(cur.pushed.weights, d.pushedAdd.weights),
+        events: removeIds(addIds(cur.pushed.events, d.pushedAdd.events), d.deletesDone.events),
+        walks: removeIds(addIds(cur.pushed.walks, d.pushedAdd.walks), d.deletesDone.walks),
+      },
+      deletes: { walks: removeIds(cur.deletes.walks, d.deletesDone.walks), events: removeIds(cur.deletes.events, d.deletesDone.events) },
+    },
+  };
+}
+
+/** Fusionne les carnets du serveur avec ceux du téléphone (union par identifiant, rien n'est écrasé). */
+export function mergeRemote(local: DogRecord[], remote: RemoteRecord[]): DogRecord[] {
+  const out = [...local];
+  for (const rr of remote) {
+    const i = out.findIndex((r) => r.sync?.cloudId === rr.cloudId || r.dog.id === rr.dog.id);
+    const ids = { weights: rr.weights.map(weightId), events: rr.events.map((e) => e.id), walks: rr.walks.map((w) => w.id) };
+    if (i < 0) {
+      out.push({
+        dog: rr.dog, weights: rr.weights, events: rr.events, walks: rr.walks, planStartedOn: new Date().toISOString(), done: {},
+        sync: { ...emptySyncState(), cloudId: rr.cloudId, profileHash: stableHash(dogPayload(rr.dog)), pushed: ids },
+      });
+      continue;
+    }
+    const r = out[i];
+    const st = r.sync ?? emptySyncState();
+    const weights = mergeById(r.weights, rr.weights, weightId, (w) => w.date);
+    out[i] = {
+      ...r,
+      dog: { ...r.dog, weightKg: weights.length ? weights[weights.length - 1].kg : r.dog.weightKg },
+      weights,
+      events: mergeById(r.events, rr.events, (e) => e.id, (e) => e.date, st.deletes.events),
+      walks: mergeById(r.walks ?? [], rr.walks, (w) => w.id, (w) => w.startedAt, st.deletes.walks).slice(-400),
+      sync: {
+        ...st, cloudId: rr.cloudId,
+        pushed: { weights: addIds(st.pushed.weights, ids.weights), events: addIds(st.pushed.events, ids.events), walks: addIds(st.pushed.walks, ids.walks) },
+      },
+    };
+  }
+  return out;
+}
+
+interface Saved { answers: QuizAnswers; dogs: DogRecord[]; activeDogId: string | null; premium: boolean; waitlist: WaitlistEntry | null; notifHour?: number | null; lastSyncAt?: string | null }
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -128,6 +190,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [waitlist, setWaitlistState] = useState<WaitlistEntry | null>(null);
   const [notifHour, setNotifHourState] = useState<number | null>(8);
   const [ready, setReady] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
+  const [lastSyncError, setLastSyncError] = useState<string | null>(null);
+  const dogsRef = useRef<DogRecord[]>([]);
+  dogsRef.current = dogs;
+  const syncRunning = useRef<Promise<void> | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -153,6 +221,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           setA(saved.answers ?? {}); setDogs(saved.dogs ?? []); setActiveId(saved.activeDogId ?? saved.dogs?.[0]?.dog.id ?? null);
           setPremiumState(Boolean(saved.premium)); setWaitlistState(saved.waitlist ?? null);
           if (saved.notifHour !== undefined) setNotifHourState(saved.notifHour);
+          setLastSyncAt(saved.lastSyncAt ?? null);
         }
       } catch {}
       if (supabaseConfigured) {
@@ -169,6 +238,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       answers: next.answers ?? answers, dogs: next.dogs ?? dogs, activeDogId: next.activeDogId === undefined ? activeDogId : next.activeDogId,
       premium: next.premium ?? premium, waitlist: next.waitlist === undefined ? waitlist : next.waitlist,
       notifHour: next.notifHour === undefined ? notifHour : next.notifHour,
+      lastSyncAt: next.lastSyncAt === undefined ? lastSyncAt : next.lastSyncAt,
     };
     AsyncStorage.setItem(KEY, JSON.stringify(payload)).catch(() => {});
   };
@@ -181,8 +251,66 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setDogs(next); persist({ dogs: next });
   };
 
+  // ——— Carnet cloud ———
+  const signedIn = Boolean(session) && supabaseConfigured;
+
+  /** Envoie les nouveautés de tous les chiens (un seul envoi à la fois). */
+  const syncNow = useCallback(async () => {
+    if (!supabaseConfigured) return;
+    if (syncRunning.current) return syncRunning.current;
+    const run = (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) return;
+      setSyncing(true);
+      let error: string | null = null;
+      for (const r of [...dogsRef.current]) {
+        const d = await pushRecord(r);
+        if (d.error) error = d.error;
+        setDogs((prev) => {
+          const next = prev.map((x) => (x.dog.id === d.dogId ? applyDelta(x, d) : x));
+          return next.some((x, i) => x !== prev[i]) ? next : prev;
+        });
+      }
+      setLastSyncError(error);
+      if (!error) setLastSyncAt(new Date().toISOString());
+      setSyncing(false);
+    })();
+    syncRunning.current = run;
+    try { await run; } finally { syncRunning.current = null; }
+  }, []);
+
+  /** Récupère les carnets du compte et les fusionne. Renvoie le nombre de chiens du foyer après fusion. */
+  const pullNow = useCallback(async () => {
+    const remote = await pullAll();
+    if (!remote) return dogsRef.current.length;
+    const merged = mergeRemote(dogsRef.current, remote);
+    setDogs(merged);
+    setActiveId((cur) => (cur && merged.some((r) => r.dog.id === cur) ? cur : merged[0]?.dog.id ?? null));
+    return merged.length;
+  }, []);
+
+  // Sauvegarde locale à chaque changement du foyer (y compris après une synchro).
+  useEffect(() => { if (ready) persist({}); }, [dogs, lastSyncAt]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Envoi automatique, regroupé : 1,5 s après la dernière modification.
+  useEffect(() => {
+    if (!ready || !signedIn) return;
+    const t = setTimeout(() => { syncNow().catch(() => {}); }, 1500);
+    return () => clearTimeout(t);
+  }, [dogs, ready, signedIn, syncNow]);
+
+  // Au démarrage (connecté) et à chaque retour dans l'app : récupération puis envoi.
+  useEffect(() => {
+    if (!ready || !signedIn) return;
+    pullNow().then(() => syncNow()).catch(() => {});
+    const sub = AppState.addEventListener("change", (st) => { if (st === "active") pullNow().then(() => syncNow()).catch(() => {}); });
+    return () => sub.remove();
+  }, [ready, signedIn, pullNow, syncNow]);
+
   const value = useMemo<Store>(() => ({
     session, answers, dogs, premium, ready, waitlist, score,
+    syncNow, pullNow, syncing,
+    syncStatus: syncLabel({ ...emptySyncState(), lastSyncAt: lastSyncAt ?? undefined, lastError: lastSyncError }, signedIn),
     dog: active?.dog ?? null,
     activeDogId: active?.dog.id ?? null,
     weights: active?.weights ?? [],
@@ -217,6 +345,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setDogs(next); setActiveId(id); setA({}); persist({ dogs: next, activeDogId: id, answers: {} });
     },
     removeDog: (id) => {
+      const gone = dogs.find((r) => r.dog.id === id);
+      if (gone?.sync?.cloudId && signedIn) archiveCloudDog(gone.sync.cloudId).catch(() => {});
       const next = dogs.filter((r) => r.dog.id !== id);
       const nextActive = activeDogId === id ? next[0]?.dog.id ?? null : activeDogId;
       setDogs(next); setActiveId(nextActive); persist({ dogs: next, activeDogId: nextActive });
@@ -233,19 +363,26 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     scoreFor: (id) => { const r = dogs.find((x) => x.dog.id === id); return r ? scoreOf(r) : null; },
     recomputeScore: () => (active ? scoreOf(active) : null),
     setPremium: (v) => { setPremiumState(v); persist({ premium: v }); },
-    addWeight: (kg) => { if (active) updateRecord(active.dog.id, (r) => ({ ...r, dog: { ...r.dog, weightKg: kg }, weights: [...r.weights, { date: new Date().toISOString(), kg }] })); },
+    addWeight: (kg) => { if (active) updateRecord(active.dog.id, (r) => ({ ...r, dog: { ...r.dog, weightKg: kg }, weights: [...r.weights, { id: "wt-" + Date.now(), date: new Date().toISOString(), kg }] })); },
     addWalk: (w) => {
       if (!active) return;
       updateRecord(active.dog.id, (r) => ({ ...r, walks: [...(r.walks ?? []), w].slice(-400) }));
-      if (session && !active.dog.id.startsWith("local-")) pushWalkToCloud(active.dog.id, w).catch(() => {});
     },
-    removeWalk: (id) => { if (active) updateRecord(active.dog.id, (r) => ({ ...r, walks: (r.walks ?? []).filter((w) => w.id !== id) })); },
+    removeWalk: (id) => {
+      if (!active) return;
+      updateRecord(active.dog.id, (r) => {
+        const st = r.sync;
+        // Déjà envoyée → suppression à répercuter côté serveur à la prochaine synchro.
+        const sync = st && st.pushed.walks.includes(id) ? { ...st, deletes: { ...st.deletes, walks: addIds(st.deletes.walks, [id]) } } : st;
+        return { ...r, walks: (r.walks ?? []).filter((w) => w.id !== id), sync };
+      });
+    },
     addEvent: (e) => { if (active) updateRecord(active.dog.id, (r) => ({ ...r, events: [...r.events, { ...e, id: "ev-" + Date.now(), date: e.date ?? new Date().toISOString() }] })); },
     resetAll: async () => {
       await AsyncStorage.multiRemove([KEY, LEGACY_KEY]).catch(() => {});
-      setA({}); setDogs([]); setActiveId(null); setPremiumState(false); setWaitlistState(null); setNotifHourState(8);
+      setA({}); setDogs([]); setActiveId(null); setPremiumState(false); setWaitlistState(null); setNotifHourState(8); setLastSyncAt(null); setLastSyncError(null);
     },
-  }), [session, answers, dogs, active, score, premium, ready, waitlist, activeDogId, notifHour]);
+  }), [session, answers, dogs, active, score, premium, ready, waitlist, activeDogId, notifHour, syncing, lastSyncAt, lastSyncError, signedIn, syncNow, pullNow]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

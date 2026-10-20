@@ -19,11 +19,11 @@ const GESTURES: { key: string; label: string }[] = [
 
 /**
  * Onglet 4 : Carnet. Poids, gestes validés, événements, fiche d'urgence, réglages RGPD.
- * v1 locale ; l'étape 7 synchronise avec `weights`, `health_events`, `documents` et les rappels.
+ * Carnet cloud (sprint 3) : pesées, événements et balades sont sauvegardés sur le compte (lib/sync.ts, migration 0004).
  */
 export default function Carnet() {
   const router = useRouter();
-  const { dog, score, weights, events, addWeight, addEvent, resetAll, session, premium, dogs, removeDog, setAnswers, resetAnswers, notifHour, setNotifHour } = useStore();
+  const { dog, score, weights, events, walks, addWeight, addEvent, resetAll, session, premium, dogs, removeDog, setAnswers, resetAnswers, notifHour, setNotifHour, syncStatus, syncing, syncNow } = useStore();
   const [kg, setKg] = useState("");
   const [tab, setTab] = useState<"suivi" | "urgence" | "reglages">("suivi");
   if (!dog || !score) return null;
@@ -63,7 +63,7 @@ export default function Carnet() {
 
   const exportData = async () => {
     if (!supabaseConfigured || !session) {
-      const payload = JSON.stringify({ dog, weights, events, score }, null, 2);
+      const payload = JSON.stringify({ dog, weights, events, walks, score }, null, 2);
       await Share.share({ message: payload, title: "Mes données Stan & Will" });
       return;
     }
@@ -188,6 +188,13 @@ export default function Carnet() {
             <Card style={{ marginTop: 16 }}>
               <H2>Compte</H2>
               <P style={{ marginTop: 6 }}>{session ? `Connecté : ${session.user.email}` : "Pas de compte : les données restent sur ce téléphone."}</P>
+              {session ? (
+                <Pressable onPress={() => syncNow()} disabled={syncing} accessibilityRole="button" accessibilityLabel="Sauvegarder maintenant" style={s.syncRow}>
+                  <Text style={{ fontSize: 16 }}>{syncing ? "⏳" : "☁️"}</Text>
+                  <Small style={{ flex: 1 }}>{syncing ? "Sauvegarde en cours…" : syncStatus}</Small>
+                  {!syncing ? <Small style={{ color: colors.foret, fontFamily: fonts.bold }}>Sauvegarder</Small> : null}
+                </Pressable>
+              ) : null}
               {!session ? <View style={{ marginTop: 10 }}><Button title="Créer un compte pour sauvegarder" variant="secondary" onPress={() => router.push("/(onboarding)/auth")} /></View> : null}
               {!premium ? <View style={{ marginTop: 8 }}><Button title="Voir le plan de prévention" onPress={() => router.push("/(onboarding)/paywall")} /></View> : null}
             </Card>
@@ -234,6 +241,7 @@ export default function Carnet() {
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.creme },
   body: { padding: 20, paddingBottom: 40 },
+  syncRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10, minHeight: 44, backgroundColor: colors.creme, borderRadius: radius.sm, paddingHorizontal: 10 },
   segments: { flexDirection: "row", backgroundColor: colors.saugeClair, borderRadius: radius.md, padding: 4, marginTop: 14 },
   segment: { flex: 1, paddingVertical: 9, borderRadius: 11, alignItems: "center" },
   segmentSel: { backgroundColor: colors.foret },
