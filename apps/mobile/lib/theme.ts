@@ -5,6 +5,8 @@ export const colors = {
   sauge: "#A7C4A0",
   saugeClair: "#DCE8D8",
   miel: "#F2B544",
+  /** miel saturé : boutons principaux (texte vert très foncé, contraste > 9:1) */
+  mielVif: "#F5A623",
   mielFonce: "#D99A1F",
   creme: "#FBF8F2",
   blanc: "#FFFFFF",

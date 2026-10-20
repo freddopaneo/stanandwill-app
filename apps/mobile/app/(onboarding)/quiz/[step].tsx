@@ -67,7 +67,7 @@ export default function QuizStepScreen() {
           <>
             <Small style={{ marginBottom: 2 }}>Les races fragiles, avec un plan de prévention dédié</Small>
             {FRAGILE_BREEDS.map((b) => (
-              <BreedChoice key={b.id} label={b.label} badge="Plan dédié" full selected={answers.breed_id === b.id} onPress={() => setAnswers({ breed_id: b.id, variety: undefined, size: undefined })} />
+              <BreedChoice key={b.id} label={b.label} full selected={answers.breed_id === b.id} onPress={() => setAnswers({ breed_id: b.id, variety: undefined, size: undefined })} />
             ))}
             {answers.breed_id === "dachshund" && (
               <>
@@ -166,11 +166,11 @@ export default function QuizStepScreen() {
   }
 }
 
-function BreedChoice({ label, badge, full, selected, onPress }: { label: string; badge: string; full: boolean; selected?: boolean; onPress: () => void }) {
+function BreedChoice({ label, full, selected, onPress }: { label: string; full: boolean; selected?: boolean; onPress: () => void }) {
   return (
-    <Pressable accessibilityRole="radio" accessibilityState={{ selected }} onPress={onPress} style={[s.breed, selected && s.breedSel]}>
+    <Pressable accessibilityRole="radio" accessibilityState={{ selected }} accessibilityLabel={full ? `${label}, plan de prévention dédié` : label} onPress={onPress} style={[s.breed, selected && s.breedSel]}>
       <Text style={[s.breedLabel, selected && { color: colors.foret }]}>{label}</Text>
-      <View style={[s.badge, full ? { backgroundColor: colors.miel } : { backgroundColor: colors.saugeClair }]}><Text style={s.badgeText}>{badge}</Text></View>
+      {full && <Image source={require("../../../assets/icon.png")} style={[s.shield, selected && { opacity: 1 }]} accessibilityIgnoresInvertColors />}
     </Pressable>
   );
 }
@@ -180,11 +180,10 @@ function keyFor(id: string) {
 }
 
 const s = StyleSheet.create({
-  breed: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10, borderWidth: 1.5, borderColor: colors.ligne, backgroundColor: colors.blanc, borderRadius: radius.lg, paddingVertical: 13, paddingHorizontal: 16, minHeight: 52, shadowColor: colors.foretFonce, shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 1 },
+  breed: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10, borderWidth: 1.5, borderColor: colors.ligne, backgroundColor: colors.blanc, borderRadius: 16, paddingVertical: 13, paddingHorizontal: 16, minHeight: 52, shadowColor: colors.foretFonce, shadowOpacity: 0.05, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
   breedSel: { borderColor: colors.foret, backgroundColor: colors.saugeClair },
   breedLabel: { fontFamily: fonts.bold, fontSize: 16, color: colors.texte },
-  badge: { borderRadius: 999, paddingVertical: 3, paddingHorizontal: 9 },
-  badgeText: { fontFamily: fonts.bold, fontSize: 11, color: colors.foretFonce },
+  shield: { width: 22, height: 22, borderRadius: 7, opacity: 0.55 },
   safe: { flex: 1, backgroundColor: colors.creme },
   progress: { height: 4, backgroundColor: colors.ligne, marginHorizontal: 20, borderRadius: 999, marginTop: 6 },
   progressFill: { height: 4, backgroundColor: colors.foret, borderRadius: 999 },
