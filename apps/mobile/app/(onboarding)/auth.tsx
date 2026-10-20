@@ -47,6 +47,8 @@ export default function Auth() {
     // Carnet cloud : on récupère d'abord ce qui existe déjà sur le compte (autre téléphone), puis on envoie ce téléphone.
     let count = 0;
     try { count = await pullNow(); await syncNow(); } catch {}
+    // E-mail de bienvenue (une seule fois par compte, garanti côté serveur). Sans attendre la réponse.
+    supabase.functions.invoke("welcome-email").catch(() => {});
     setBusy(false);
     if (count === 0) { router.replace("/(onboarding)/quiz/0"); return; }
     router.replace("/(tabs)/aujourdhui");

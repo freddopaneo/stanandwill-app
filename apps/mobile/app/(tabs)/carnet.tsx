@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, ScrollView, StyleSheet, Pressable, Text, TextInput, Alert, Share } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -26,6 +26,19 @@ export default function Carnet() {
   const { dog, score, weights, events, walks, addWeight, addEvent, resetAll, session, premium, dogs, removeDog, setAnswers, resetAnswers, notifHour, setNotifHour, walkHour, setWalkHour, syncStatus, syncing, syncNow } = useStore();
   const [kg, setKg] = useState("");
   const [tab, setTab] = useState<"suivi" | "urgence" | "reglages">("suivi");
+  const [recap, setRecap] = useState<boolean | null>(null);
+  // Préférence « récap du dimanche » (profiles.recap_opt_in, migration 0005), lue à l'ouverture des réglages.
+  useEffect(() => {
+    if (tab !== "reglages" || !session || !supabaseConfigured) return;
+    supabase.from("profiles").select("recap_opt_in").eq("id", session.user.id).single()
+      .then(({ data }) => setRecap(data ? Boolean((data as any).recap_opt_in) : null), () => setRecap(null));
+  }, [tab, session?.user.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const toggleRecap = async () => {
+    if (!session || recap == null) return;
+    const next = !recap; setRecap(next);
+    const { error } = await supabase.from("profiles").update({ recap_opt_in: next }).eq("id", session.user.id);
+    if (error) { setRecap(!next); Alert.alert("Réglage non enregistré", "Vérifiez votre connexion et réessayez."); }
+  };
   if (!dog || !score) return null;
 
   const ageM = ageMonthsFrom(dog.birth_month ?? undefined);
@@ -209,6 +222,17 @@ export default function Carnet() {
                 ))}
               </View>
             </Card>
+            {session && recap != null ? (
+              <Card style={{ marginTop: 12 }}>
+                <Pressable onPress={toggleRecap} style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 44 }} accessibilityRole="switch" accessibilityState={{ checked: recap }}>
+                  <View style={{ flex: 1 }}>
+                    <H2>Récap du dimanche</H2>
+                    <Small style={{ marginTop: 4 }}>Un e-mail court chaque dimanche soir : balades de la semaine, rappel de pesée, conseil de saison.</Small>
+                  </View>
+                  <View style={[s.switch, recap && s.switchOn]}><View style={[s.knob, recap && { alignSelf: "flex-end" }]} /></View>
+                </Pressable>
+              </Card>
+            ) : null}
             <Card style={{ marginTop: 12 }}>
               <H2>Rappel de balade</H2>
               <Small style={{ marginTop: 4 }}>Si {dog.name} n'est pas encore sorti à cette heure-là, un seul rappel dans la journée. Aucun rappel si une balade est déjà enregistrée.</Small>
@@ -252,6 +276,9 @@ export default function Carnet() {
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.creme },
   body: { padding: 20, paddingBottom: 40 },
+  switch: { width: 50, height: 30, borderRadius: 15, backgroundColor: colors.ligne, padding: 3, justifyContent: "center" },
+  switchOn: { backgroundColor: colors.foret },
+  knob: { width: 24, height: 24, borderRadius: 12, backgroundColor: colors.blanc },
   syncRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10, minHeight: 44, backgroundColor: colors.creme, borderRadius: radius.sm, paddingHorizontal: 10 },
   segments: { flexDirection: "row", backgroundColor: colors.saugeClair, borderRadius: radius.md, padding: 4, marginTop: 14 },
   segment: { flex: 1, paddingVertical: 9, borderRadius: 11, alignItems: "center" },

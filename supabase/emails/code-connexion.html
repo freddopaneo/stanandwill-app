@@ -1,0 +1,20 @@
+<!-- Gabarit Supabase Auth — à coller dans : Authentication → Email Templates → « Magic Link » ET « Confirm signup ».
+     Objet conseillé : Votre code Stan & Will : {{ .Token }}
+     {{ .Token }} = code à 6 chiffres saisi dans l'app. Aucun lien cliquable : plus sûr et compatible avec le parcours de l'app. -->
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Votre code Stan &amp; Will</title></head>
+<body style="margin:0;padding:0;background:#FBF8F2;font-family:Nunito,Helvetica,Arial,sans-serif;color:#14291F">
+<span style="display:none!important;opacity:0;color:transparent;height:0;width:0;overflow:hidden">Votre code de connexion : {{ .Token }}. Valable 1 heure.</span>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FBF8F2"><tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px">
+<tr><td style="background:#1E5B45;border-radius:20px 20px 0 0;padding:22px 28px;color:#FBF8F2;font-size:20px;font-weight:800">Stan &amp; Will <span style="font-weight:400;font-size:14px;color:#DCE8D8">· prévention santé par race</span></td></tr>
+<tr><td style="background:#FFFFFF;border:1px solid #E6E0D4;border-top:0;border-radius:0 0 20px 20px;padding:28px;text-align:center">
+<p style="margin:0 0 6px;font-size:16px;line-height:24px">Voici votre code de connexion :</p>
+<div style="display:inline-block;margin:10px 0 14px;padding:14px 24px;background:#FBF8F2;border:2px solid #F5A623;border-radius:14px;font-size:34px;font-weight:800;letter-spacing:8px">{{ .Token }}</div>
+<p style="margin:0;font-size:14px;line-height:21px;color:#4B5E54">Saisissez-le dans l'app. Il est valable 1 heure.<br>Vous n'avez rien demandé ? Ignorez simplement cet e-mail : personne ne peut se connecter sans ce code.</p>
+</td></tr>
+<tr><td style="padding:18px 8px;font-size:12px;line-height:18px;color:#4B5E54;text-align:center">Stan &amp; Will est édité par Eureca Design SRL (Belgique).</td></tr>
+</table></td></tr></table>
+</body>
+</html>
