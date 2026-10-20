@@ -6,6 +6,7 @@ import * as ImagePicker from "expo-image-picker";
 import { quizSteps, questionTitle, FRAGILE_BREEDS, OTHER_BREEDS, breedInfo, type QuizStep } from "@stanandwill/core";
 import { useStore } from "../../../lib/store";
 import { Button, Choice, H1, P, Small } from "../../../components/ui";
+import { WeightSlider } from "../../../components/WeightSlider";
 import { colors, fonts, radius } from "../../../lib/theme";
 
 const VARIETIES = [{ id: "smooth", label: "Poil ras" }, { id: "long", label: "Poil long" }, { id: "wire", label: "Poil dur" }];
@@ -121,12 +122,12 @@ export default function QuizStepScreen() {
         const v = answers.weightKg;
         return (
           <>
+            <WeightSlider value={v} min={d.min} max={d.max} onChange={(kg) => setAnswers({ weightKg: kg })} />
             <View style={s.weightRow}>
-              <Pressable onPress={() => setAnswers({ weightKg: Math.max(d.min, Number(((v ?? 5) - 0.1).toFixed(1))) })} style={s.stepBtn}><Text style={s.stepTxt}>−</Text></Pressable>
-              <Text style={s.weightNum}>{v == null ? "—" : `${v.toFixed(1)} kg`}</Text>
-              <Pressable onPress={() => setAnswers({ weightKg: Math.min(d.max, Number(((v ?? 5) + 0.1).toFixed(1))) })} style={s.stepBtn}><Text style={s.stepTxt}>+</Text></Pressable>
+              <Pressable onPress={() => setAnswers({ weightKg: Math.max(d.min, Number(((v ?? 5) - 0.1).toFixed(1))) })} style={s.stepBtn} accessibilityLabel="Moins 100 grammes"><Text style={s.stepTxt}>−</Text></Pressable>
+              <Small>ajuster à 100 g près</Small>
+              <Pressable onPress={() => setAnswers({ weightKg: Math.min(d.max, Number(((v ?? 5) + 0.1).toFixed(1))) })} style={s.stepBtn} accessibilityLabel="Plus 100 grammes"><Text style={s.stepTxt}>+</Text></Pressable>
             </View>
-            <View style={s.wrap}>{[3, 4, 5, 6, 8, 10, 12].map((w) => <Pressable key={w} onPress={() => setAnswers({ weightKg: w })} style={[s.chip, v === w && s.chipSel]}><Text style={[s.chipText, v === w && s.chipTextSel]}>{w} kg</Text></Pressable>)}</View>
             <Choice label={d.unknownLabel} selected={v === null} onPress={() => setAnswers({ weightKg: null })} />
             <Small>Astuce : montez sur la balance avec lui, puis sans lui.</Small>
           </>
@@ -179,7 +180,7 @@ function keyFor(id: string) {
 }
 
 const s = StyleSheet.create({
-  breed: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10, borderWidth: 1.5, borderColor: colors.ligne, backgroundColor: colors.blanc, borderRadius: radius.md, paddingVertical: 13, paddingHorizontal: 16, minHeight: 50 },
+  breed: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10, borderWidth: 1.5, borderColor: colors.ligne, backgroundColor: colors.blanc, borderRadius: radius.lg, paddingVertical: 13, paddingHorizontal: 16, minHeight: 52, shadowColor: colors.foretFonce, shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 1 },
   breedSel: { borderColor: colors.foret, backgroundColor: colors.saugeClair },
   breedLabel: { fontFamily: fonts.bold, fontSize: 16, color: colors.texte },
   badge: { borderRadius: 999, paddingVertical: 3, paddingHorizontal: 9 },
@@ -199,7 +200,7 @@ const s = StyleSheet.create({
   photoFrame: { width: 160, height: 160, borderRadius: 80, backgroundColor: colors.saugeClair, alignItems: "center", justifyContent: "center", overflow: "hidden" },
   photo: { width: 160, height: 160 },
   weightRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 18 },
-  stepBtn: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.saugeClair, alignItems: "center", justifyContent: "center" },
+  stepBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.saugeClair, alignItems: "center", justifyContent: "center" },
   stepTxt: { fontFamily: fonts.black, fontSize: 26, color: colors.foret },
   weightNum: { fontFamily: fonts.black, fontSize: 36, color: colors.foretFonce, minWidth: 130, textAlign: "center" },
 });
