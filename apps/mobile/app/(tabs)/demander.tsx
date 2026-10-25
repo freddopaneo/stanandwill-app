@@ -1,3 +1,4 @@
+import { track } from "../../lib/telemetry";
 import React, { useRef, useState } from "react";
 import { View, ScrollView, StyleSheet, Pressable, Text, TextInput, KeyboardAvoidingView, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -42,6 +43,7 @@ export default function Demander() {
     try {
       const r = await ask(question, dog, next.map(({ role, content }) => ({ role, content })));
       setMsgs([...next, { role: "assistant", content: r.answer, triage: r.triage, source: r.source }]);
+      track("question_asked", { triage: r.triage ?? null }); // jamais le texte de la question
     } catch (e) {
       if (e instanceof QuotaError) router.push("/(onboarding)/paywall");
       else setMsgs([...next, { role: "assistant", content: "Je n'ai pas pu répondre. Vérifiez la connexion et réessayez ; en cas de doute, appelez votre vétérinaire." }]);

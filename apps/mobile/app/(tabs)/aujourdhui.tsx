@@ -10,6 +10,7 @@ import { Button, Card, H1, H2, P, Pill, Small } from "../../components/ui";
 import { ScoreGauge } from "../../components/ScoreGauge";
 import { DogSwitcher } from "../../components/DogSwitcher";
 import { WeatherCard } from "../../components/WeatherCard";
+import { AnalyticsConsentCard } from "../../components/AnalyticsConsent";
 import { colors, fonts, radius } from "../../lib/theme";
 
 const TYPE_LABEL: Record<PlanItem["type"], string> = { lesson: "À lire · 2 min", gesture: "Geste de la semaine", check: "Vérification", weigh: "Pesée" };
@@ -63,6 +64,7 @@ export default function Aujourdhui() {
 
         <View style={{ marginTop: 10 }}><DogSwitcher /></View>
         <WeatherCard dog={dog} />
+        <AnalyticsConsentCard />
 
         <View style={s.progress}>
           <Small style={{ fontFamily: fonts.bold, color: colors.foret }}>Plan {info.label} · semaine {week} sur 4</Small>

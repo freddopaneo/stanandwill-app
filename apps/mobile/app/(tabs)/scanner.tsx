@@ -7,6 +7,7 @@ import { useStore } from "../../lib/store";
 import { Button, Card, H1, H2, P, Pill, Small } from "../../components/ui";
 import { colors, fonts, radius } from "../../lib/theme";
 import { analyzeFood, analyzePhoto, QuotaError, type ScanResult } from "../../lib/api";
+import { track } from "../../lib/telemetry";
 
 type Mode = "food" | "stool" | "skin" | "eye" | "posture";
 const MODES: { id: Mode; emoji: string; label: string; hint: string }[] = [
@@ -32,7 +33,7 @@ export default function Scanner() {
   const runFood = async () => {
     if (!dog) return;
     setBusy(true); setResult(null);
-    try { setResult(await analyzeFood(query.trim(), dog)); }
+    try { setResult(await analyzeFood(query.trim(), dog)); track("scan_done", { mode: "food" }); }
     catch (e: any) { if (e instanceof QuotaError) router.push("/(onboarding)/paywall"); else Alert.alert("Analyse impossible", e?.message ?? "Réessayez."); }
     finally { setBusy(false); }
   };
@@ -46,7 +47,7 @@ export default function Scanner() {
       : await ImagePicker.launchImageLibraryAsync({ quality: 0.7, exif: false, mediaTypes: ["images"] });
     if (picked.canceled || !picked.assets[0]) return;
     setBusy(true); setResult(null);
-    try { if (mode === "food") return; setResult(await analyzePhoto(mode, picked.assets[0].uri, dog)); }
+    try { if (mode === "food") return; setResult(await analyzePhoto(mode, picked.assets[0].uri, dog)); track("scan_done", { mode }); }
     catch (e: any) { if (e instanceof QuotaError) router.push("/(onboarding)/paywall"); else Alert.alert("Analyse impossible", e?.message ?? "Réessayez."); }
     finally { setBusy(false); }
   };

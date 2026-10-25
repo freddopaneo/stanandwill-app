@@ -1,3 +1,4 @@
+import { track } from "../../lib/telemetry";
 import React, { useEffect, useState } from "react";
 import { View, ScrollView, StyleSheet, Pressable, Text, TextInput, Alert } from "react-native";
 import { useRouter } from "expo-router";
@@ -19,7 +20,7 @@ export default function Paywall() {
   const [code, setCode] = useState("");
   const [showCode, setShowCode] = useState(false);
   const [offers, setOffers] = useState(OFFERS);
-  useEffect(() => { loadOffers().then(setOffers).catch(() => {}); }, []);
+  useEffect(() => { loadOffers().then(setOffers).catch(() => {}); track("paywall_viewed"); }, []);
   const name = dog?.name ?? "votre chien";
 
   const doRestore = async () => {
@@ -32,7 +33,7 @@ export default function Paywall() {
     setBusy(true);
     try {
       const ok = await purchase(choice);
-      if (ok) { setPremium(true); router.replace("/(onboarding)/auth"); }
+      if (ok) { track("purchase_completed", { offer: choice }); setPremium(true); router.replace("/(onboarding)/auth"); }
     } catch (e: any) {
       Alert.alert("Paiement impossible", e?.message ?? "Réessayez dans un instant.");
     } finally { setBusy(false); }

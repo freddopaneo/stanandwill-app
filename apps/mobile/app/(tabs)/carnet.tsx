@@ -9,6 +9,7 @@ import { supabase, supabaseConfigured } from "../../lib/supabase";
 import { Button, Card, H1, H2, P, Pill, Small } from "../../components/ui";
 import { ScoreGauge } from "../../components/ScoreGauge";
 import { TimePickerField } from "../../components/TimePickerField";
+import { AnalyticsConsentSetting } from "../../components/AnalyticsConsent";
 import { colors, fonts, radius } from "../../lib/theme";
 
 const GESTURES: { key: string; label: string }[] = [
@@ -243,6 +244,7 @@ export default function Carnet() {
                 {dogs.length > 1 ? <Button title={`Retirer ${dog.name} de ce compte`} variant="ghost" onPress={() => Alert.alert(`Retirer ${dog.name}`, "Son carnet et ses pesées seront supprimés de ce téléphone.", [{ text: "Annuler", style: "cancel" }, { text: "Retirer", style: "destructive", onPress: () => removeDog(dog.id) }])} /> : null}
               </View>
             </Card>
+            <AnalyticsConsentSetting />
             <Card style={{ marginTop: 12 }}>
               <H2>Mes données (RGPD)</H2>
               <Small style={{ marginTop: 4 }}>Hébergement en Europe (Francfort). Photos de scan supprimées sous 30 jours. Aucune revente de données.</Small>

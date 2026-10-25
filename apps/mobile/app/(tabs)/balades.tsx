@@ -13,6 +13,7 @@ import { WalkShareCard, CARD_W } from "../../components/WalkShareCard";
 import { shareViewAsImage } from "../../lib/share";
 import { WeatherCard } from "../../components/WeatherCard";
 import { BadgesGrid, ChallengeCard, NewBadgesBanner } from "../../components/BadgesSection";
+import { track } from "../../lib/telemetry";
 
 const DAY_LETTERS = ["D", "L", "M", "M", "J", "V", "S"];
 
@@ -66,14 +67,17 @@ export default function Balades() {
 
   /** Enregistre la balade et repère les badges qu'elle débloque (affichés dans la feuille de fin). */
   const record = (w: WalkSummary) => {
-    setFresh(newlyEarned(badges, evaluateBadges([...walks, w], badgeCtx)));
+    const earned = newlyEarned(badges, evaluateBadges([...walks, w], badgeCtx));
+    earned.forEach((b) => track("badge_earned", { badge: b.id }));
+    if (!challenge.done && weeklyChallenge([...walks, w], badgeCtx).done) track("challenge_completed", { challenge: challenge.id });
+    setFresh(earned);
     addWalk(w);
     setShareWalk(w);
   };
 
   const doShare = async () => {
     if (!shareWalk) return;
-    setSharing(true);
+    setSharing(true); track("share_card");
     const ok = await shareViewAsImage(cardRef, `stanandwill-balade-${shareWalk.id}`, `${dog?.name} a fait ${shareWalk.stepsEst.toLocaleString("fr-FR")} pas avec Stan & Will`);
     setSharing(false);
     if (!ok) Alert.alert("Partage indisponible", "Relancez l'app : la brique de capture n'a pas pu se charger.");

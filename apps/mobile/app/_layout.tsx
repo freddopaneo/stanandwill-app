@@ -6,11 +6,12 @@ import { useFonts, Nunito_400Regular, Nunito_700Bold, Nunito_800ExtraBold } from
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StoreProvider } from "../lib/store";
 import { configureBilling } from "../lib/billing";
+import { initTelemetry, Sentry } from "../lib/telemetry";
 import { colors } from "../lib/theme";
 
-export default function RootLayout() {
+function RootLayout() {
   const [loaded] = useFonts({ Nunito_400Regular, Nunito_700Bold, Nunito_800ExtraBold });
-  React.useEffect(() => { configureBilling().catch(() => {}); }, []);
+  React.useEffect(() => { initTelemetry().catch(() => {}); configureBilling().catch(() => {}); }, []);
   if (!loaded) {
     return <View style={{ flex: 1, backgroundColor: colors.creme, alignItems: "center", justifyContent: "center" }}><ActivityIndicator color={colors.foret} /></View>;
   }
@@ -27,3 +28,6 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+// Sentry.wrap : capture les plantages de l'interface (inactif sans EXPO_PUBLIC_SENTRY_DSN).
+export default Sentry.wrap(RootLayout);

@@ -4,6 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Session } from "@supabase/supabase-js";
 import { supabase, supabaseConfigured } from "./supabase";
 import { computeScore, breedInfo, ageMonthsFrom, addIds, removeIds, mergeById, stableHash, emptySyncState, syncLabel, type QuizAnswers, type ScoreResult, type BreedProfile, type WalkSummary, type SyncState, type ReminderTime } from "@stanandwill/core";
+import { track, reportError, minutesBucket } from "./telemetry";
 import { pushRecord, pullAll, archiveCloudDog, dogPayload, weightId, type PushDelta, type RemoteRecord } from "./sync";
 
 export interface Dog {
@@ -288,6 +289,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           return next.some((x, i) => x !== prev[i]) ? next : prev;
         });
       }
+      if (error) reportError(new Error("sync: " + error), { area: "carnet_sync" });
       setLastSyncError(error);
       if (!error) setLastSyncAt(new Date().toISOString());
       setSyncing(false);
@@ -358,6 +360,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           : r.events;
         return { ...r, done, events, planStartedOn: r.planStartedOn ?? new Date().toISOString() };
       });
+      track("plan_item_done");
     },
     setWaitlist: (w) => { setWaitlistState(w); persist({ waitlist: w }); },
     setAnswers: (patch) => setA((prev) => { const n = { ...prev, ...patch }; persist({ answers: n }); return n; }),
@@ -367,6 +370,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const rec: DogRecord = { dog: d, weights: d.weightKg != null ? [{ date: new Date().toISOString(), kg: d.weightKg }] : [], events: [], planStartedOn: new Date().toISOString(), done: {} };
       const next = [...dogs, rec];
       setDogs(next); setActiveId(d.id); setA({}); persist({ dogs: next, activeDogId: d.id, answers: {} });
+      track("quiz_completed", { breed: d.breed_id, dogs_count: next.length });
     },
     updateActiveDog: (d) => { if (active) updateRecord(active.dog.id, (r) => ({ ...r, dog: { ...d, id: r.dog.id } })); },
     updateDog: (id, d) => {
@@ -392,10 +396,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     scoreFor: (id) => { const r = dogs.find((x) => x.dog.id === id); return r ? scoreOf(r) : null; },
     recomputeScore: () => (active ? scoreOf(active) : null),
     setPremium: (v) => { setPremiumState(v); persist({ premium: v }); },
-    addWeight: (kg) => { if (active) updateRecord(active.dog.id, (r) => ({ ...r, dog: { ...r.dog, weightKg: kg }, weights: [...r.weights, { id: "wt-" + Date.now(), date: new Date().toISOString(), kg }] })); },
+    addWeight: (kg) => { if (active) updateRecord(active.dog.id, (r) => ({ ...r, dog: { ...r.dog, weightKg: kg }, weights: [...r.weights, { id: "wt-" + Date.now(), date: new Date().toISOString(), kg }] })); track("weight_added"); },
     addWalk: (w) => {
       if (!active) return;
       updateRecord(active.dog.id, (r) => ({ ...r, walks: [...(r.walks ?? []), w].slice(-400) }));
+      track("walk_completed", { source: w.source, minutes: minutesBucket(w.durationS) });
     },
     removeWalk: (id) => {
       if (!active) return;
@@ -406,7 +411,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         return { ...r, walks: (r.walks ?? []).filter((w) => w.id !== id), sync };
       });
     },
-    addEvent: (e) => { if (active) updateRecord(active.dog.id, (r) => ({ ...r, events: [...r.events, { ...e, id: "ev-" + Date.now(), date: e.date ?? new Date().toISOString() }] })); },
+    addEvent: (e) => { if (active && e.kind !== "gesture") track("health_event_added", { kind: e.kind }); if (active) updateRecord(active.dog.id, (r) => ({ ...r, events: [...r.events, { ...e, id: "ev-" + Date.now(), date: e.date ?? new Date().toISOString() }] })); },
     resetAll: async () => {
       await AsyncStorage.multiRemove([KEY, LEGACY_KEY]).catch(() => {});
       setA({}); setDogs([]); setActiveId(null); setPremiumState(false); setWaitlistState(null); setNotifHourState(8); setWalkHourState(18); setNotifMinuteState(0); setWalkMinuteState(0); setLastSyncAt(null); setLastSyncError(null);

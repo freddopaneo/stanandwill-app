@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { supabase, supabaseConfigured } from "../../lib/supabase";
 import { useStore } from "../../lib/store";
+import { track } from "../../lib/telemetry";
 import { Button, Card, H1, P, Small } from "../../components/ui";
 import { colors, fonts, radius } from "../../lib/theme";
 
@@ -50,6 +51,7 @@ export default function Auth() {
     // E-mail de bienvenue (une seule fois par compte, garanti côté serveur). Sans attendre la réponse.
     supabase.functions.invoke("welcome-email").catch(() => {});
     setBusy(false);
+    track(dog ? "account_created" : "account_restored", { dogs_count: count });
     if (count === 0) { router.replace("/(onboarding)/quiz/0"); return; }
     router.replace("/(tabs)/aujourdhui");
   };

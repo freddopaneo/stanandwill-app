@@ -1,3 +1,4 @@
+import { track } from "../../lib/telemetry";
 import React from "react";
 import { View, Image, StyleSheet, Text, ScrollView, Pressable, useWindowDimensions } from "react-native";
 import { useRouter } from "expo-router";
@@ -60,7 +61,7 @@ export default function Welcome() {
 
         <View style={{ flex: 1, minHeight: 12 }} />
 
-        <Button title="Créer la fiche de mon chien" onPress={() => router.push("/(onboarding)/quiz/0")} />
+        <Button title="Créer la fiche de mon chien" onPress={() => { track("onboarding_started"); router.push("/(onboarding)/quiz/0"); }} />
         <Text style={s.under}>3 minutes · gratuit · sans compte</Text>
         <Pressable onPress={() => router.push("/album")} accessibilityRole="link" style={{ minHeight: 44, justifyContent: "center" }}>
           <Text style={s.album}>Notre album : découvrir Stan & Will</Text>
