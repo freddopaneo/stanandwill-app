@@ -6,7 +6,7 @@
 import { Platform, Share } from "react-native";
 import type { View } from "react-native";
 
-export async function shareViewAsImage(ref: React.RefObject<View | null>, fileName: string, message: string): Promise<boolean> {
+export async function shareViewAsImage(ref: React.RefObject<React.ComponentRef<typeof View> | null>, fileName: string, message: string): Promise<boolean> {
   if (!ref.current) return false;
   let uri: string;
   try {

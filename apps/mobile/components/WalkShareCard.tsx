@@ -20,7 +20,7 @@ export interface WalkShareCardProps {
   streak: number;
 }
 
-export const WalkShareCard = forwardRef<View, WalkShareCardProps>(function WalkShareCard({ walk, dogName, photo, goalMinutes, goalHit, streak }, ref) {
+export const WalkShareCard = forwardRef<React.ComponentRef<typeof View>, WalkShareCardProps>(function WalkShareCard({ walk, dogName, photo, goalMinutes, goalHit, streak }, ref) {
   const d = new Date(walk.startedAt);
   const date = d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
   return (

@@ -10,5 +10,9 @@
     "test": "npm --workspace packages/core run test",
     "typecheck": "npm --workspace packages/core run typecheck && npm --workspace apps/mobile run typecheck",
     "test:emails": "npx --workspace packages/core vitest run --root ../.. supabase/functions/_shared/emails.test.ts"
+  },
+  "overrides": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
   }
 }

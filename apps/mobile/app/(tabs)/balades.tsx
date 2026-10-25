@@ -29,7 +29,7 @@ export default function Balades() {
   const [manualMin, setManualMin] = useState("");
   const [showManual, setShowManual] = useState(false);
   const tracker = useRef<WalkTracker | null>(null);
-  const cardRef = useRef<View>(null);
+  const cardRef = useRef<React.ComponentRef<typeof View>>(null);
   const [shareWalk, setShareWalk] = useState<WalkSummary | null>(null);
   const [sharing, setSharing] = useState(false);
   const [fresh, setFresh] = useState<Badge[]>([]);

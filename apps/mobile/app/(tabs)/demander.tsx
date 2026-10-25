@@ -27,7 +27,7 @@ export default function Demander() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const FREE_LIMIT = 3;
   const used = msgs.filter((m) => m.role === "user").length;
   const blocked = !premium && used >= FREE_LIMIT;
