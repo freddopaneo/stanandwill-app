@@ -18,8 +18,8 @@ export async function ensurePermission(): Promise<boolean> {
   return req.granted;
 }
 
-/** Planifie (ou replanifie) le rappel du jour à `hour` h, avec le prénom du chien et le titre de l'item du jour. */
-export async function scheduleDaily(hour: number | null, dogName: string, itemTitle?: string) {
+/** Planifie (ou replanifie) le rappel du jour à `hour` h `minute`, avec le prénom du chien et le titre de l'item du jour. */
+export async function scheduleDaily(hour: number | null, dogName: string, itemTitle?: string, minute = 0) {
   await Notifications.cancelScheduledNotificationAsync(ID_KEY).catch(() => {});
   if (hour == null) return;
   if (!(await ensurePermission())) return;
@@ -33,7 +33,7 @@ export async function scheduleDaily(hour: number | null, dogName: string, itemTi
       body: itemTitle ? `${itemTitle} · 2 minutes` : "Deux minutes pour son plan de prévention.",
       data: { route: "/(tabs)/aujourdhui" },
     },
-    trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute: 0, channelId: "daily" } as any,
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute, channelId: "daily" } as any,
   });
 }
 

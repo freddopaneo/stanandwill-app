@@ -15,17 +15,17 @@ function Icon({ name, focused }: { name: string; focused: boolean }) {
 
 /** Replanifie le rappel « pas encore sorti » : à l'ouverture, au retour dans l'app et à chaque balade (tous chiens confondus). */
 function useWalkReminder() {
-  const { dog, dogs, walkHour } = useStore();
+  const { dog, dogs, walkHour, walkMinute } = useStore();
   const allWalks = useMemo(() => dogs.flatMap((r) => r.walks ?? []), [dogs]);
   const lastWalk = allWalks.reduce((a, w) => (w.startedAt > a ? w.startedAt : a), "");
   useEffect(() => {
     if (!dog) return;
     const goal = dailyGoal({ breedId: dog.breed_id, size: dog.size, weightKg: dog.weightKg, ageMonths: ageMonthsFrom(dog.birth_month ?? undefined) });
-    const plan = () => scheduleWalkReminders(walkReminderDates(allWalks, walkHour), walkReminderText(dog.name, goal.minutes)).catch(() => {});
+    const plan = () => scheduleWalkReminders(walkReminderDates(allWalks, walkHour == null ? null : { hour: walkHour, minute: walkMinute }), walkReminderText(dog.name, goal.minutes)).catch(() => {});
     plan();
     const sub = AppState.addEventListener("change", (st) => { if (st === "active") plan(); });
     return () => sub.remove();
-  }, [dog?.id, dog?.name, walkHour, lastWalk, allWalks.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [dog?.id, dog?.name, walkHour, walkMinute, lastWalk, allWalks.length]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
 /** Un appui sur une notification ouvre l'onglet concerné (rappel de balade → Balades, geste du jour → Aujourd'hui). */

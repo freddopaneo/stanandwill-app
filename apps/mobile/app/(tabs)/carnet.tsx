@@ -8,6 +8,7 @@ import { DogSwitcher } from "../../components/DogSwitcher";
 import { supabase, supabaseConfigured } from "../../lib/supabase";
 import { Button, Card, H1, H2, P, Pill, Small } from "../../components/ui";
 import { ScoreGauge } from "../../components/ScoreGauge";
+import { TimePickerField } from "../../components/TimePickerField";
 import { colors, fonts, radius } from "../../lib/theme";
 
 const GESTURES: { key: string; label: string }[] = [
@@ -23,7 +24,7 @@ const GESTURES: { key: string; label: string }[] = [
  */
 export default function Carnet() {
   const router = useRouter();
-  const { dog, score, weights, events, walks, addWeight, addEvent, resetAll, session, premium, dogs, removeDog, setAnswers, resetAnswers, notifHour, setNotifHour, walkHour, setWalkHour, syncStatus, syncing, syncNow } = useStore();
+  const { dog, score, weights, events, walks, addWeight, addEvent, resetAll, session, premium, dogs, removeDog, setAnswers, resetAnswers, notifHour, notifMinute, setNotifTime, walkHour, walkMinute, setWalkTime, syncStatus, syncing, syncNow } = useStore();
   const [kg, setKg] = useState("");
   const [tab, setTab] = useState<"suivi" | "urgence" | "reglages">("suivi");
   const [recap, setRecap] = useState<boolean | null>(null);
@@ -214,13 +215,8 @@ export default function Carnet() {
             <Card style={{ marginTop: 12 }}>
               <H2>Rappel quotidien</H2>
               <Small style={{ marginTop: 4 }}>Une notification par jour, à l'heure de votre choix, avec le geste du jour. Rien n'est envoyé à un serveur.</Small>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
-                {[null, 7, 8, 9, 12, 18, 20].map((h) => (
-                  <Pressable key={String(h)} onPress={() => setNotifHour(h)} style={[s.chip, notifHour === h && { backgroundColor: colors.foret }]}>
-                    <Text style={[s.chipText, notifHour === h && { color: colors.blanc }]}>{h == null ? "Désactivé" : `${h} h`}</Text>
-                  </Pressable>
-                ))}
-              </View>
+              <TimePickerField title="Rappel du geste du jour" minHour={5} maxHour={22} maxMinuteOfMaxHour={0}
+                value={notifHour == null ? null : { hour: notifHour, minute: notifMinute }} onChange={setNotifTime} />
             </Card>
             {session && recap != null ? (
               <Card style={{ marginTop: 12 }}>
@@ -235,14 +231,9 @@ export default function Carnet() {
             ) : null}
             <Card style={{ marginTop: 12 }}>
               <H2>Rappel de balade</H2>
-              <Small style={{ marginTop: 4 }}>Si {dog.name} n'est pas encore sorti à cette heure-là, un seul rappel dans la journée. Aucun rappel si une balade est déjà enregistrée.</Small>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
-                {[null, 12, 17, 18, 19].map((h) => (
-                  <Pressable key={String(h)} onPress={() => setWalkHour(h)} style={[s.chip, walkHour === h && { backgroundColor: colors.foret }]} accessibilityRole="radio" accessibilityState={{ selected: walkHour === h }}>
-                    <Text style={[s.chipText, walkHour === h && { color: colors.blanc }]}>{h == null ? "Désactivé" : `${h} h`}</Text>
-                  </Pressable>
-                ))}
-              </View>
+              <Small style={{ marginTop: 4 }}>Si {dog.name} n'est pas encore sorti à cette heure-là, un seul rappel dans la journée. Aucun rappel si une balade est déjà enregistrée. Entre 7 h et 21 h 45.</Small>
+              <TimePickerField title="Rappel de balade" minHour={7} maxHour={21} maxMinuteOfMaxHour={45}
+                value={walkHour == null ? null : { hour: walkHour, minute: walkMinute }} onChange={setWalkTime} />
             </Card>
             <Card style={{ marginTop: 12 }}>
               <H2>Mon foyer</H2>

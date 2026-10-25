@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { walkReminderDates, walkReminderText } from "./reminders";
+import { walkReminderDates, walkReminderText, clampTime, fmtTime } from "./reminders";
 
 const at = (s: string) => new Date(s);
 
@@ -21,8 +21,20 @@ describe("rappel « pas encore sorti »", () => {
     expect(walkReminderDates([], 12, at("2026-10-20T15:00:00"))[0].getDate()).toBe(21);
   });
   it("jamais la nuit", () => {
-    expect(walkReminderDates([], 23, at("2026-10-20T06:00:00"))[0].getHours()).toBe(21);
+    const late = walkReminderDates([], { hour: 23, minute: 30 }, at("2026-10-20T06:00:00"))[0];
+    expect([late.getHours(), late.getMinutes()]).toEqual([21, 45]);
     expect(walkReminderDates([], 5, at("2026-10-20T06:00:00"))[0].getHours()).toBe(7);
+  });
+  it("heure personnalisée à la minute", () => {
+    const d = walkReminderDates([], { hour: 18, minute: 35 }, at("2026-10-20T18:20:00"))[0];
+    expect([d.getDate(), d.getHours(), d.getMinutes()]).toEqual([20, 18, 35]);
+    expect(walkReminderDates([], { hour: 18, minute: 35 }, at("2026-10-20T18:40:00"))[0].getDate()).toBe(21);
+  });
+  it("format et bornes", () => {
+    expect(fmtTime({ hour: 18, minute: 0 })).toBe("18 h");
+    expect(fmtTime({ hour: 7, minute: 5 })).toBe("7 h 05");
+    expect(clampTime({ hour: 4, minute: 10 }, 300, 1320)).toEqual({ hour: 5, minute: 0 });
+    expect(clampTime(8)).toEqual({ hour: 8, minute: 0 });
   });
   it("texte adapté au chien", () => {
     const t = walkReminderText("Stan", 50);

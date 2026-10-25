@@ -20,7 +20,7 @@ const TYPE_LABEL: Record<PlanItem["type"], string> = { lesson: "À lire · 2 min
  */
 export default function Aujourdhui() {
   const router = useRouter();
-  const { dog, score, premium, planStartedOn, done, completeItem, notifHour } = useStore();
+  const { dog, score, premium, planStartedOn, done, completeItem, notifHour, notifMinute } = useStore();
   const [answered, setAnswered] = useState<number | null>(null);
 
   const plan = useMemo(() => (dog ? buildPlan(dog.breed_id) : []), [dog?.breed_id]);
@@ -30,7 +30,7 @@ export default function Aujourdhui() {
   const points = useMemo(() => (dog && score ? bilanPoints(dog, score) : []), [dog, score]);
 
   useEffect(() => { setAnswered(null); }, [item?.id]);
-  useEffect(() => { if (dog) scheduleDaily(notifHour, dog.name, item?.title).catch(() => {}); }, [notifHour, dog?.name, item?.id]);
+  useEffect(() => { if (dog) scheduleDaily(notifHour, dog.name, item?.title, notifMinute).catch(() => {}); }, [notifHour, notifMinute, dog?.name, item?.id]);
 
   if (!dog || !score || !item) return null;
 
