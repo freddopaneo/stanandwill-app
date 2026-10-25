@@ -17,15 +17,14 @@ Supabase → **SQL Editor** → nouvelle requête → coller puis **Run**, dans 
 1. `supabase/migrations/0004_carnet_sync.sql` (Carnet cloud, si pas déjà fait)
 2. `supabase/migrations/0005_emails.sql`
 
-## Étape 1 bis — Adresse d'expédition
-- **Pour tester tout de suite** : rien à faire, l'expéditeur par défaut est `Stan & Will <bonjour@dopaneo.ai>` (domaine déjà vérifié dans Resend).
-- **Pour le lancement** : ajouter un domaine dédié dans Resend (Domains → Add Domain, région **eu-west-1**), par exemple `mail.stanandwill.xx`, copier les enregistrements DNS chez le registrar, puis changer le secret `EMAIL_FROM` (étape 3). Utiliser un sous-domaine (`mail.`) protège la réputation du domaine principal.
+## Étape 1 bis — Adresse d'expédition ✅
+Domaine `mail.stanandwill.com` vérifié dans Resend le 25 octobre 2026 (DNS chez Squarespace : 1 TXT DKIM `resend._domainkey.mail` + 2 CNAME `send.mail` et `rsend.mail`). Expéditeur : `Stan & Will <bonjour@mail.stanandwill.com>`.
 
 ## Étape 2 — Code de connexion via Resend (5 min)
-1. Resend → **API Keys** → Create → nom `stanandwill-smtp`, permission **Sending access**, domaine `dopaneo.ai` (puis le domaine dédié). Copier la clé (elle ne s'affiche qu'une fois).
+1. Resend → **API Keys** → Create → nom `stanandwill-smtp`, permission **Sending access**, domaine `mail.stanandwill.com`. Copier la clé (elle ne s'affiche qu'une fois).
 2. Supabase → **Authentication → Emails → SMTP Settings** → activer *Custom SMTP* :
    - Host `smtp.resend.com` · Port `465` · Username `resend` · Password : la clé copiée
-   - Sender email : `bonjour@dopaneo.ai` · Sender name : `Stan & Will`
+   - Sender email : `bonjour@mail.stanandwill.com` · Sender name : `Stan & Will`
 3. Supabase → **Authentication → Email Templates** → onglets **Magic Link** puis **Confirm signup** :
    - Objet : `Votre code Stan & Will : {{ .Token }}`
    - Corps : coller tout le contenu de `supabase/emails/code-connexion.html`
@@ -37,7 +36,7 @@ Supabase → **Edge Functions → Secrets** → ajouter :
 | Nom | Valeur |
 |---|---|
 | `RESEND_API_KEY` | une 2ᵉ clé Resend « Sending access » (nom `stanandwill-functions`) |
-| `EMAIL_FROM` | `Stan & Will <bonjour@dopaneo.ai>` (à remplacer par le domaine dédié plus tard) |
+| `EMAIL_FROM` | `Stan & Will <bonjour@mail.stanandwill.com>`  |
 | `EMAIL_REPLY_TO` | l'adresse qui reçoit les réponses (facultatif) |
 | `APP_URL` | lien du site ou de la fiche store, ex. `https://stanandwill-dopaneo.vercel.app` |
 | `CRON_SECRET` | une longue chaîne aléatoire (Terminal du Mac : `openssl rand -hex 32`) |

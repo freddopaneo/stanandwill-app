@@ -1,7 +1,7 @@
 /** Envoi via l'API Resend (https://resend.com/docs/api-reference). Clé lue dans les secrets Supabase : RESEND_API_KEY. */
 import type { Rendered } from "./emails.ts";
 
-export const EMAIL_FROM = Deno.env.get("EMAIL_FROM") ?? "Stan & Will <bonjour@dopaneo.ai>";
+export const EMAIL_FROM = Deno.env.get("EMAIL_FROM") ?? "Stan & Will <bonjour@mail.stanandwill.com>";
 export const EMAIL_REPLY_TO = Deno.env.get("EMAIL_REPLY_TO") ?? undefined;
 export const APP_URL = Deno.env.get("APP_URL") ?? "https://stanandwill-dopaneo.vercel.app";
 
