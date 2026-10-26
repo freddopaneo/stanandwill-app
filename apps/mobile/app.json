@@ -11,7 +11,37 @@
       "bundleIdentifier": "be.eurecadesign.stanandwill",
       "infoPlist": {
         "NSCameraUsageDescription": "Stan & Will utilise l'appareil photo pour scanner les croquettes et photographier ce que votre chien réclame.",
-        "NSPhotoLibraryUsageDescription": "Pour choisir la photo de profil de votre chien et ses documents."
+        "NSPhotoLibraryUsageDescription": "Pour choisir la photo de profil de votre chien et ses documents.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "buildNumber": "1",
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "C617.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "35F9.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "E174.1"
+            ]
+          }
+        ]
       }
     },
     "android": {
@@ -24,7 +54,8 @@
         "CAMERA",
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION"
-      ]
+      ],
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -61,16 +92,24 @@
         "expo-font",
         {
           "fonts": [
-            "./node_modules/@expo-google-fonts/nunito/400Regular/Nunito_400Regular.ttf",
-            "./node_modules/@expo-google-fonts/nunito/700Bold/Nunito_700Bold.ttf",
-            "./node_modules/@expo-google-fonts/nunito/800ExtraBold/Nunito_800ExtraBold.ttf"
+            "../../node_modules/@expo-google-fonts/nunito/400Regular/Nunito_400Regular.ttf",
+            "../../node_modules/@expo-google-fonts/nunito/700Bold/Nunito_700Bold.ttf",
+            "../../node_modules/@expo-google-fonts/nunito/800ExtraBold/Nunito_800ExtraBold.ttf"
           ]
         }
       ],
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Stan & Will mesure la distance de la balade pour estimer l'activité de votre chien. Votre position n'est jamais partagée précisément."
+          "locationWhenInUsePermission": "Stan & Will mesure la distance de vos balades pour estimer l'activité de votre chien, et affiche la météo locale. Le trajet n'est jamais enregistré ni partagé."
+        }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "stanandwill-eu",
+          "project": "stanandwill-app",
+          "url": "https://de.sentry.io/"
         }
       ]
     ],

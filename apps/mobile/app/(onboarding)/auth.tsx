@@ -69,7 +69,7 @@ export default function Auth() {
             <Small>Adresse e-mail</Small>
             <TextInput value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" placeholder="vous@exemple.fr" style={s.input} />
             <Check checked={cgu} onPress={() => setCgu(!cgu)}>
-              <Small>J'accepte les <Text style={s.link} onPress={() => Linking.openURL("https://stanandwill.netlify.app/confidentialite")}>conditions et la politique de confidentialité</Text>. J'ai compris que les réponses de l'app sont produites par une intelligence artificielle, sous contrôle vétérinaire, et ne constituent pas un diagnostic.</Small>
+              <Small>J'accepte les <Text style={s.link} onPress={() => Linking.openURL("https://stanandwill-dopaneo.vercel.app/confidentialite")}>conditions et la politique de confidentialité</Text>. J'ai compris que les réponses de l'app sont produites par une intelligence artificielle, sous contrôle vétérinaire, et ne constituent pas un diagnostic.</Small>
             </Check>
             <Check checked={news} onPress={() => setNews(!news)}>
               <Small>Je veux recevoir les conseils de saison et les nouveautés (un e-mail toutes les deux semaines au plus).</Small>
