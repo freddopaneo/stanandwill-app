@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>%WEB_TITLE%</title>
+    <meta name="description" content="Stan & Will : l'application de prévention santé par race pour votre chien." />
+    <!-- Application installable (PWA) : icône, couleurs et ouverture en plein écran depuis l'écran d'accueil -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#1E5B45" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Stan & Will" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <style id="expo-reset">
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        overflow: hidden;
+        background-color: #fbf8f2;
+        overscroll-behavior: none;
+      }
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+      /* Sur ordinateur, l'app garde la largeur d'un téléphone, centrée */
+      @media (min-width: 600px) {
+        body {
+          background-color: #e9e4d8;
+        }
+        #root {
+          max-width: 480px;
+          margin: 0 auto;
+          background-color: #fbf8f2;
+          box-shadow: 0 0 40px rgba(20, 41, 31, 0.12);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <noscript>Activez JavaScript pour utiliser Stan & Will.</noscript>
+    <div id="root"></div>
+  </body>
+</html>

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { View, ScrollView, StyleSheet, TextInput, Pressable, Text, Alert, Linking } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { supabase, supabaseConfigured } from "../../lib/supabase";
+import { API_URL, supabase, supabaseConfigured } from "../../lib/supabase";
 import { useStore } from "../../lib/store";
 import { track } from "../../lib/telemetry";
 import { Button, Card, H1, P, Small } from "../../components/ui";
@@ -16,6 +16,8 @@ import { colors, fonts, radius } from "../../lib/theme";
 export default function Auth() {
   const router = useRouter();
   const { dog, pullNow, syncNow } = useStore();
+  // then=paywall : on vient de l'écran d'abonnement (web), on y retourne une fois le compte créé.
+  const { then, offer } = useLocalSearchParams<{ then?: string; offer?: string }>();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [code, setCode] = useState("");
@@ -52,6 +54,7 @@ export default function Auth() {
     supabase.functions.invoke("welcome-email").catch(() => {});
     setBusy(false);
     track(dog ? "account_created" : "account_restored", { dogs_count: count });
+    if (then === "paywall" && (dog || count > 0)) { router.replace({ pathname: "/(onboarding)/paywall", params: offer ? { offer } : {} }); return; }
     if (count === 0) { router.replace("/(onboarding)/quiz/0"); return; }
     router.replace("/(tabs)/aujourdhui");
   };
@@ -69,7 +72,7 @@ export default function Auth() {
             <Small>Adresse e-mail</Small>
             <TextInput value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" placeholder="vous@exemple.fr" style={s.input} />
             <Check checked={cgu} onPress={() => setCgu(!cgu)}>
-              <Small>J'accepte les <Text style={s.link} onPress={() => Linking.openURL("https://stanandwill-dopaneo.vercel.app/confidentialite")}>conditions et la politique de confidentialité</Text>. J'ai compris que les réponses de l'app sont produites par une intelligence artificielle, sous contrôle vétérinaire, et ne constituent pas un diagnostic.</Small>
+              <Small>J'accepte les <Text style={s.link} onPress={() => Linking.openURL(`${API_URL}/confidentialite`)}>conditions et la politique de confidentialité</Text>. J'ai compris que les réponses de l'app sont produites par une intelligence artificielle, sous contrôle vétérinaire, et ne constituent pas un diagnostic.</Small>
             </Check>
             <Check checked={news} onPress={() => setNews(!news)}>
               <Small>Je veux recevoir les conseils de saison et les nouveautés (un e-mail toutes les deux semaines au plus).</Small>

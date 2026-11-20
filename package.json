@@ -9,7 +9,9 @@
     "mobile": "npm --workspace apps/mobile run start",
     "test": "npm --workspace packages/core run test",
     "typecheck": "npm --workspace packages/core run typecheck && npm --workspace apps/mobile run typecheck",
-    "test:emails": "npx --workspace packages/core vitest run --root ../.. supabase/functions/_shared/emails.test.ts"
+    "test:emails": "npx --workspace packages/core vitest run --root ../.. supabase/functions/_shared/emails.test.ts",
+    "web": "npm --workspace apps/mobile run web",
+    "build:web": "npm --workspace apps/mobile run build:web"
   },
   "overrides": {
     "react": "19.3.0",

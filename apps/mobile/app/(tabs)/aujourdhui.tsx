@@ -11,6 +11,7 @@ import { ScoreGauge } from "../../components/ScoreGauge";
 import { DogSwitcher } from "../../components/DogSwitcher";
 import { WeatherCard } from "../../components/WeatherCard";
 import { AnalyticsConsentCard } from "../../components/AnalyticsConsent";
+import { InstallHint } from "../../components/InstallHint";
 import { colors, fonts, radius } from "../../lib/theme";
 
 const TYPE_LABEL: Record<PlanItem["type"], string> = { lesson: "À lire · 2 min", gesture: "Geste de la semaine", check: "Vérification", weigh: "Pesée" };
@@ -64,6 +65,7 @@ export default function Aujourdhui() {
 
         <View style={{ marginTop: 10 }}><DogSwitcher /></View>
         <WeatherCard dog={dog} />
+        <InstallHint />
         <AnalyticsConsentCard />
 
         <View style={s.progress}>

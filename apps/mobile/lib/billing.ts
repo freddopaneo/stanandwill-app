@@ -1,5 +1,6 @@
 /**
- * Abonnements — RevenueCat (react-native-purchases) avec repli « bac à sable » en développement.
+ * Abonnements iOS / Android — RevenueCat (react-native-purchases) avec repli « bac à sable » en développement.
+ * La version web (PWA) passe par Stripe : voir lib/billing.web.ts.
  *
  * Mise en service (étape 3) :
  *   1. npx expo install react-native-purchases          (module natif : nécessite un build EAS, pas Expo Go)
@@ -8,22 +9,13 @@
  *   4. Webhook RevenueCat → https://<site>/api/revenuecat (met à jour profiles.subscription_status).
  * Tant que le module n'est pas installé ou la clé absente, les achats sont simulés en développement (SANDBOX) et refusés en production.
  */
-import { Platform } from "react-native";
-import { API_URL, supabase, supabaseConfigured } from "./supabase";
+import { Linking, Platform } from "react-native";
+import { supabase, supabaseConfigured } from "./supabase";
+import { ENTITLEMENT, OFFERS, PRODUCT_IDS, SANDBOX, type OfferId } from "./offers";
 
-export type OfferId = "annual" | "monthly" | "weekly";
+// Offres, identifiants produits et codes fondateurs : communs à l'app et au web (lib/offers.ts).
+export * from "./offers";
 
-export const OFFERS: { id: OfferId; title: string; subtitle: string; price: string; badge?: string }[] = [
-  { id: "annual", title: "Annuel", subtitle: "7 jours d'essai gratuit · 4,17 €/mois", price: "49,99 €/an", badge: "Le plus choisi" },
-  { id: "monthly", title: "Mensuel", subtitle: "Sans engagement", price: "9,99 €/mois" },
-  { id: "weekly", title: "Hebdomadaire", subtitle: "Pour un besoin ponctuel", price: "6,99 €/sem." },
-];
-
-/** Identifiants produits à créer à l'identique dans App Store Connect, Google Play et RevenueCat. */
-export const PRODUCT_IDS: Record<OfferId, string> = { annual: "sw_annual_4999", monthly: "sw_monthly_999", weekly: "sw_weekly_699" };
-export const ENTITLEMENT = "premium";
-
-const SANDBOX = __DEV__ || process.env.EXPO_PUBLIC_BILLING_SANDBOX === "1";
 const RC_KEY = Platform.OS === "ios" ? process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY : process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY;
 
 let Purchases: any = null;
@@ -108,17 +100,13 @@ export async function restore(): Promise<boolean> {
   return Boolean(info.entitlements.active[ENTITLEMENT]);
 }
 
-/** Codes fondateurs : validés côté serveur (route /api/founder). */
-export async function redeemFounderCode(code: string): Promise<boolean> {
-  if (!code) return false;
-  try {
-    const headers: Record<string, string> = { "content-type": "application/json" };
-    if (supabaseConfigured) {
-      const { data } = await supabase.auth.getSession();
-      if (data.session?.access_token) headers.authorization = `Bearer ${data.session.access_token}`;
-    }
-    const r = await fetch(`${API_URL}/api/founder`, { method: "POST", headers, body: JSON.stringify({ code }) });
-    if (r.ok) { const j = await r.json(); return Boolean(j.ok); }
-  } catch {}
-  return SANDBOX && /^TECKEL-\d{4}$/i.test(code);
+/** Ouvre la page de gestion des abonnements du store (résilier, changer d'offre). */
+export async function manageSubscription(): Promise<boolean> {
+  const url = Platform.OS === "ios" ? "https://apps.apple.com/account/subscriptions" : "https://play.google.com/store/account/subscriptions";
+  try { await Linking.openURL(url); return true; } catch { return false; }
+}
+
+/** Web uniquement (retour de Stripe). Sur iOS / Android, l'achat est confirmé immédiatement par le store. */
+export async function waitForPremium(_timeoutMs = 0): Promise<boolean> {
+  return hasPremium();
 }

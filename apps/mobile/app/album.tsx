@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { View, ScrollView, StyleSheet, Pressable, Text, Image, Modal, useWindowDimensions } from "react-native";
+import { View, ScrollView, StyleSheet, Pressable, Text, Image, Modal } from "react-native";
+import { useAppWidth } from "../lib/layout";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ALBUM, type AlbumPhoto } from "../lib/album";
@@ -12,7 +13,7 @@ import { colors, fonts, radius } from "../lib/theme";
  */
 export default function Album() {
   const router = useRouter();
-  const { width } = useWindowDimensions();
+  const width = useAppWidth();
   const [open, setOpen] = useState<AlbumPhoto | null>(null);
   const col = (width - 40 - 10) / 2;
 

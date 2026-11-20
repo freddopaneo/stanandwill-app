@@ -7,6 +7,16 @@ import { Platform } from "react-native";
 
 const ID_KEY = "sw-daily";
 
+/** Les rappels programmés sur l'appareil existent sur iOS et Android, pas dans un navigateur (voir notifications.web.ts). */
+export const REMINDERS_AVAILABLE = true;
+
+/** Route portée par la dernière notification touchée (ex. "/(tabs)/balades"), ou null. */
+export function useNotificationRoute(): { id: string; route: string } | null {
+  const last = Notifications.useLastNotificationResponse();
+  const route = last?.notification.request.content.data?.route;
+  return last && typeof route === "string" ? { id: last.notification.request.identifier, route } : null;
+}
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }),
 });

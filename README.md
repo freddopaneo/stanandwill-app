@@ -46,7 +46,12 @@ Vérifications : `npm test` (9 tests du score) et `npm run typecheck` depuis la 
 | **Google Play Console** | Android | 25 $ une fois | Compte organisation Eureca Design. |
 | **RevenueCat** | abonnements unifiés, paywall, webhooks | 0 € jusqu'à 2 500 $/mois de revenus | Créer les produits `sw_annual_4999`, `sw_monthly_999`, `sw_weekly_699` et l'entitlement `premium` (identiques dans App Store Connect et Play Console). |
 | **Stripe** | paiement web (hors stores) | 1,5 % + 0,25 € par transaction | Compte Eureca Design, lié au site Next.js. |
-| **Anthropic (API Claude)** | scanner et assistant, côté serveur uniquement | à l'usage (~0,02 € par réponse) | Clé stockée dans Netlify, jamais dans l'app. |
+| **Anthropic (API Claude)** | scanner et assistant, côté serveur uniquement | à l'usage (~0,02 € par réponse) | Clé stockée dans Vercel, jamais dans l'app. |
+
+## Version web (PWA) et paiement Stripe — 20 novembre 2026
+
+L'app tourne aussi dans un navigateur, installable sur l'écran d'accueil sans passer par les stores, avec un abonnement payé par Stripe.
+Mise en service pas à pas : [`docs/WEB.md`](docs/WEB.md). Essai local : `npm run web`.
 
 ## Décision du 20 octobre 2026
 
@@ -63,7 +68,7 @@ Pas de fonction sociale « copains de balade » : l'app reste centrée sur la pr
 
 ## Règles non négociables (sécurité et RGPD)
 
-- Hébergement et traitement en Union européenne (Supabase Frankfurt, Netlify fonctions `fra1`).
+- Hébergement et traitement en Union européenne (Supabase Frankfurt, Vercel fonctions `fra1`).
 - L'app ne contient aucune clé secrète : seulement l'URL Supabase et la clé « anon » ; RLS actif sur toutes les tables (testé).
 - Le modèle IA ne reçoit jamais l'identité du maître : uniquement le profil du chien (`lib/api.ts → dogContext`).
 - Photos de scan supprimées sous 30 jours (`expire_scan_photos()`), export (`export_my_data()`) et suppression (`request_account_deletion()`) en un geste depuis l'onglet Carnet → Réglages.

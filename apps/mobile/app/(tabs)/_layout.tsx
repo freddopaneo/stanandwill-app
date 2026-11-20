@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo } from "react";
 import { Tabs, useRouter } from "expo-router";
-import * as Notifications from "expo-notifications";
 import { Text, AppState } from "react-native";
 import { ageMonthsFrom, dailyGoal, walkReminderDates, walkReminderText } from "@stanandwill/core";
 import { colors, fonts } from "../../lib/theme";
 import { useStore } from "../../lib/store";
-import { scheduleWalkReminders } from "../../lib/notifications";
+import { scheduleWalkReminders, useNotificationRoute } from "../../lib/notifications";
+import { usePremiumSync } from "../../lib/premiumSync";
 
 const ICONS: Record<string, string> = { aujourdhui: "☀️", balades: "🐾", scanner: "📷", demander: "💬", carnet: "📒" };
 
@@ -31,16 +31,16 @@ function useWalkReminder() {
 /** Un appui sur une notification ouvre l'onglet concerné (rappel de balade → Balades, geste du jour → Aujourd'hui). */
 function useNotificationRouting() {
   const router = useRouter();
-  const last = Notifications.useLastNotificationResponse();
+  const last = useNotificationRoute();
   useEffect(() => {
-    const route = last?.notification.request.content.data?.route;
-    if (typeof route === "string" && route.startsWith("/(tabs)/")) router.navigate(route as any);
-  }, [last?.notification.request.identifier]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (last && last.route.startsWith("/(tabs)/")) router.navigate(last.route as any);
+  }, [last?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
 export default function TabsLayout() {
   useWalkReminder();
   useNotificationRouting();
+  usePremiumSync();
   return (
     <Tabs
       screenOptions={({ route }) => ({

@@ -11,6 +11,8 @@ import { ScoreGauge } from "../../components/ScoreGauge";
 import { TimePickerField } from "../../components/TimePickerField";
 import { AnalyticsConsentSetting } from "../../components/AnalyticsConsent";
 import { colors, fonts, radius } from "../../lib/theme";
+import { REMINDERS_AVAILABLE } from "../../lib/notifications";
+import { manageSubscription } from "../../lib/billing";
 
 const GESTURES: { key: string; label: string }[] = [
   { key: "harness", label: "Harnais plutôt que collier" },
@@ -212,13 +214,22 @@ export default function Carnet() {
               ) : null}
               {!session ? <View style={{ marginTop: 10 }}><Button title="Créer un compte pour sauvegarder" variant="secondary" onPress={() => router.push("/(onboarding)/auth")} /></View> : null}
               {!premium ? <View style={{ marginTop: 8 }}><Button title="Voir le plan de prévention" onPress={() => router.push("/(onboarding)/paywall")} /></View> : null}
+              {premium && session ? <View style={{ marginTop: 8 }}><Button title="Gérer mon abonnement" variant="ghost" onPress={() => manageSubscription().then((ok) => { if (!ok) Alert.alert("Abonnement", "Aucun abonnement payant n'est rattaché à ce compte."); }).catch(() => Alert.alert("Abonnement", "Ouverture impossible. Réessayez dans un instant."))} /></View> : null}
             </Card>
+            {!REMINDERS_AVAILABLE ? (
+              <Card style={{ marginTop: 12 }}>
+                <H2>Rappels</H2>
+                <Small style={{ marginTop: 4 }}>Les rappels à heure fixe (geste du jour, balade) arrivent avec l'application iPhone et Android. En attendant, le récap du dimanche par e-mail vous garde sur les rails.</Small>
+              </Card>
+            ) : null}
+            {REMINDERS_AVAILABLE ? (
             <Card style={{ marginTop: 12 }}>
               <H2>Rappel quotidien</H2>
               <Small style={{ marginTop: 4 }}>Une notification par jour, à l'heure de votre choix, avec le geste du jour. Rien n'est envoyé à un serveur.</Small>
               <TimePickerField title="Rappel du geste du jour" minHour={5} maxHour={22} maxMinuteOfMaxHour={0}
                 value={notifHour == null ? null : { hour: notifHour, minute: notifMinute }} onChange={setNotifTime} />
             </Card>
+            ) : null}
             {session && recap != null ? (
               <Card style={{ marginTop: 12 }}>
                 <Pressable onPress={toggleRecap} style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 44 }} accessibilityRole="switch" accessibilityState={{ checked: recap }}>
@@ -230,12 +241,14 @@ export default function Carnet() {
                 </Pressable>
               </Card>
             ) : null}
+            {REMINDERS_AVAILABLE ? (
             <Card style={{ marginTop: 12 }}>
               <H2>Rappel de balade</H2>
               <Small style={{ marginTop: 4 }}>Si {dog.name} n'est pas encore sorti à cette heure-là, un seul rappel dans la journée. Aucun rappel si une balade est déjà enregistrée. Entre 7 h et 21 h 45.</Small>
               <TimePickerField title="Rappel de balade" minHour={7} maxHour={21} maxMinuteOfMaxHour={45}
                 value={walkHour == null ? null : { hour: walkHour, minute: walkMinute }} onChange={setWalkTime} />
             </Card>
+            ) : null}
             <Card style={{ marginTop: 12 }}>
               <H2>Mon foyer</H2>
               <Small style={{ marginTop: 4 }}>{dogs.length} chien{dogs.length > 1 ? "s" : ""} sur ce compte · jusqu'à {DOGS_INCLUDED} inclus dans le plan, sans supplément.</Small>

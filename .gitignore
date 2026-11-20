@@ -7,3 +7,5 @@ dist/
 .DS_Store
 *.tgz
 *.tsbuildinfo
+# Valeurs publiques de production (aucun secret) : voir le fichier lui-même
+!.env.production

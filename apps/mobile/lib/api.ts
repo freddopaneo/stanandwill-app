@@ -1,5 +1,5 @@
 /**
- * Appels au serveur (fonctions Next.js du projet `stanandwill`, hébergé sur Netlify) :
+ * Appels au serveur (fonctions Next.js du projet `stanandwill`, hébergé sur Vercel) :
  *   POST /api/scan        { type, query | image (base64), dog }   → ScanResult
  *   POST /api/assistant   { question, dog, history }              → AskResult
  * Le serveur porte la clé Claude, applique la minimisation des données (jamais d'identité du maître)
@@ -9,6 +9,7 @@
  * alimentaires d'urgence embarquées, pour que les parcours soient testables.
  */
 import * as FileSystem from "expo-file-system/legacy";
+import { Platform } from "react-native";
 import { API_URL, supabase, supabaseConfigured } from "./supabase";
 import type { Dog } from "./store";
 
@@ -37,6 +38,26 @@ function dogContext(d: Dog) {
 /** Identifiant du chien en base (uuid) — absent tant qu'il n'est que local. */
 function dogId(d: Dog) {
   return d.id.startsWith("local-") ? undefined : d.id;
+}
+
+/**
+ * Photo → base64 (JPEG). Sur téléphone : lecture du fichier. Dans un navigateur : la photo est d'abord réduite
+ * (1280 px au plus) pour rester légère à l'envoi, puis encodée.
+ */
+async function photoBase64(uri: string): Promise<string | null> {
+  if (Platform.OS !== "web") return FileSystem.readAsStringAsync(uri, { encoding: "base64" });
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const el = new Image();
+    el.onload = () => resolve(el);
+    el.onerror = reject;
+    el.src = uri;
+  });
+  const ratio = Math.min(1, 1280 / Math.max(img.naturalWidth, img.naturalHeight));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(img.naturalWidth * ratio);
+  canvas.height = Math.round(img.naturalHeight * ratio);
+  canvas.getContext("2d")?.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.8).split(",")[1] ?? null;
 }
 
 export class QuotaError extends Error { constructor() { super("quota"); this.name = "QuotaError"; } }
@@ -112,7 +133,7 @@ export async function analyzeFood(query: string, dog: Dog): Promise<ScanResult> 
 
 export async function analyzePhoto(type: "stool" | "skin" | "eye" | "posture", uri: string, dog: Dog): Promise<ScanResult> {
   let image: string | null = null;
-  try { image = await FileSystem.readAsStringAsync(uri, { encoding: "base64" }); } catch {}
+  try { image = await photoBase64(uri); } catch {}
   const r = image ? await post<ScanResult>("/api/scan", { type, image, dog: dogContext(dog), dog_id: dogId(dog) }, 45000) : null;
   if (r) return r;
   const labels = { stool: "des selles", skin: "de la peau", eye: "de l'œil", posture: "de la posture" }[type];

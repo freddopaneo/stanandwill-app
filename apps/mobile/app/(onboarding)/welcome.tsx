@@ -6,6 +6,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { Button } from "../../components/ui";
 import { colors, fonts, radius } from "../../lib/theme";
 import { ILLUSTRATIONS } from "../../lib/album";
+import { useAppWidth } from "../../lib/layout";
 
 /**
  * Écran d'accueil (maquette B v2, validée le 18/10) :
@@ -16,7 +17,8 @@ const FADE = [0.92, 0.8, 0.66, 0.52, 0.38, 0.26, 0.15, 0.07, 0.02];
 
 export default function Welcome() {
   const router = useRouter();
-  const { height, width } = useWindowDimensions();
+  const { height } = useWindowDimensions();
+  const width = useAppWidth();
   const insets = useSafeAreaInsets();
   const compact = height < 760; // iPhone SE / mini
   const cardW = width - 40;
