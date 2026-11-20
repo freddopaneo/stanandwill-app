@@ -38,7 +38,7 @@ Supabase → **Edge Functions → Secrets** → ajouter :
 | `RESEND_API_KEY` | une 2ᵉ clé Resend « Sending access » (nom `stanandwill-functions`) |
 | `EMAIL_FROM` | `Stan & Will <bonjour@mail.stanandwill.com>`  |
 | `EMAIL_REPLY_TO` | l'adresse qui reçoit les réponses (facultatif) |
-| `APP_URL` | lien du site ou de la fiche store, ex. `https://stanandwill-dopaneo.vercel.app` |
+| `APP_URL` | lien du site ou de la fiche store, ex. `https://stanandwill.vercel.app` |
 | `CRON_SECRET` | une longue chaîne aléatoire (Terminal du Mac : `openssl rand -hex 32`) |
 | `UNSUBSCRIBE_SECRET` | une autre chaîne aléatoire, même commande |
 
