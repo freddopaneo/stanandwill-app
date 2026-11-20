@@ -13,7 +13,8 @@ function isInstalled(): boolean {
 /**
  * Carte « Installer Stan & Will » (web uniquement), affichée tant que l'app tourne dans un onglet de navigateur.
  * - Android / Chrome : le navigateur fournit une invite d'installation, on la déclenche avec le bouton.
- * - iPhone / iPad : pas d'invite possible, on explique le geste (Safari → Partager → Sur l'écran d'accueil).
+ * - iPhone / iPad : pas d'invite possible, on explique le geste pas à pas (Safari → « ••• » ou Partager → Ajouter à l'écran d'accueil).
+ *   L'app installée ne partage pas la session de Safari : il faut se reconnecter une fois (étape 4).
  */
 export function InstallHint() {
   const [visible, setVisible] = useState(false);
@@ -43,7 +44,12 @@ export function InstallHint() {
       {prompt ? (
         <Small style={{ marginTop: 4 }}>Une icône sur l'écran d'accueil, l'app en plein écran, sans passer par un store.</Small>
       ) : (
-        <Small style={{ marginTop: 4 }}>Dans Safari : touchez le bouton Partager (le carré avec une flèche), puis « Sur l'écran d'accueil ». L'app s'ouvrira en plein écran, comme une application.</Small>
+        <View style={{ marginTop: 6, gap: 6 }}>
+          <Small>1. Dans Safari, touchez le bouton « ••• » (Voir plus), tout à droite de la barre du bas. Sur un iPhone plus ancien, c'est le bouton Partager : un carré avec une flèche vers le haut.</Small>
+          <Small>2. Dans le menu, choisissez « Ajouter à l'écran d'accueil », puis « Ajouter ».</Small>
+          <Small>3. Ouvrez Stan & Will depuis sa nouvelle icône : l'app s'affiche en plein écran.</Small>
+          <Small>4. À la première ouverture, touchez « J'ai un compte » et saisissez votre e-mail : un code à 6 chiffres vous est envoyé, et vous retrouvez votre chien et votre plan.</Small>
+        </View>
       )}
       <View style={{ marginTop: 10, gap: 4 }}>
         {prompt ? <Button title="Installer l'app" onPress={install} /> : null}
