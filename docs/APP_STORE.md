@@ -9,8 +9,8 @@
 - **Catégorie** : Santé et forme (principale) · Style de vie (secondaire)
 - **Classification d'âge** : 4+
 - **Éditeur affiché** : Eureca Design SRL
-- **URL d'assistance** : https://stanandwill.vercel.app (à remplacer par le domaine définitif)
-- **URL de confidentialité** : https://stanandwill.vercel.app/confidentialite (à compléter pour l'app : Supabase, Resend, Sentry, PostHog, Open-Meteo)
+- **URL d'assistance** : https://www.stanandwill.com (à remplacer par le domaine définitif)
+- **URL de confidentialité** : https://www.stanandwill.com/confidentialite (à compléter pour l'app : Supabase, Resend, Sentry, PostHog, Open-Meteo)
 
 ## Mots-clés (100)
 `chien,teckel,santé,vétérinaire,balade,pas,poids,race,prévention,chiot,carnet,vaccin,bouledogue` (94)

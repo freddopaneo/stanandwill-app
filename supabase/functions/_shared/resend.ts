@@ -3,7 +3,7 @@ import type { Rendered } from "./emails.ts";
 
 export const EMAIL_FROM = Deno.env.get("EMAIL_FROM") ?? "Stan & Will <bonjour@mail.stanandwill.com>";
 export const EMAIL_REPLY_TO = Deno.env.get("EMAIL_REPLY_TO") ?? undefined;
-export const APP_URL = Deno.env.get("APP_URL") ?? "https://stanandwill.vercel.app";
+export const APP_URL = Deno.env.get("APP_URL") ?? "https://www.stanandwill.com";
 
 export interface Outgoing { to: string; mail: Rendered; tags?: { name: string; value: string }[]; headers?: Record<string, string> }
 
