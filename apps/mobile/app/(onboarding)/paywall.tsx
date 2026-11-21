@@ -38,7 +38,7 @@ export default function Paywall() {
 
   // Retour de la page de paiement Stripe (web) : le serveur confirme l'abonnement en quelques secondes.
   useEffect(() => {
-    if (offer === "annual" || offer === "monthly" || offer === "weekly") setChoice(offer);
+    if (offer === "annual" || offer === "monthly") setChoice(offer);
     if (checkout !== "success") return;
     let alive = true;
     setBusy(true);

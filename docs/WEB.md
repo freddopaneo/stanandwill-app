@@ -42,16 +42,15 @@ d'abonnement** (avant cette migration, un utilisateur connecté pouvait techniqu
 Supabase → SQL Editor → coller `supabase/migrations/0006_stripe.sql` → Run.
 
 ### 2. Stripe, d'abord en mode test (15 min)
-1. Catalogue de produits → créer le produit « Stan & Will — plan de prévention » avec 3 tarifs récurrents en euros.
+1. Catalogue de produits → créer le produit « Stan & Will — plan de prévention » avec 2 tarifs récurrents en euros.
    Dans chaque tarif, ouvrir « Options supplémentaires » et renseigner la **clé de recherche** (lookup key) :
 
    | Tarif | Période | Clé de recherche |
    |---|---|---|
-   | 49,99 € | annuelle | `sw_annual_4999` |
+   | 69,99 € | annuelle | `sw_annual_6999` |
    | 9,99 € | mensuelle | `sw_monthly_999` |
-   | 6,99 € | hebdomadaire | `sw_weekly_699` |
 
-   L'essai gratuit de 7 jours sur l'annuel est ajouté par le serveur : ne pas le régler dans Stripe.
+   Pas d'essai gratuit. Le prix de lancement (49,99 € la première année, jusqu'au 31 décembre 2026) est appliqué par le serveur : ne rien régler dans Stripe.
 2. Paramètres → Facturation → **Portail client** : activer, autoriser la résiliation et la mise à jour du moyen de paiement.
 3. Développeurs → Webhooks → ajouter un point de terminaison `https://<adresse du site>/api/stripe/webhook` avec ces 4 événements :
    `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`.

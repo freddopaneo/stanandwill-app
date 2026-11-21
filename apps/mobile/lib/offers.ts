@@ -9,20 +9,19 @@ import { API_URL, supabase, supabaseConfigured } from "./supabase";
 
 export type OfferId = "annual" | "monthly" | "weekly";
 
-/** Prix de lancement : 40 € la première année sur l'annuel, jusqu'au 31 décembre 2026 inclus. Même date que côté serveur (lib/launch.ts du site). */
+/** Prix de lancement : 49,99 € la première année sur l'annuel (au lieu de 69,99 €), jusqu'au 31 décembre 2026 inclus. Même date que côté serveur (lib/launch.ts du site). */
 export const LAUNCH_END = Date.parse("2027-01-01T00:00:00+01:00");
 export const launchActive = (now = Date.now()) => now < LAUNCH_END;
 
 export const OFFERS: { id: OfferId; title: string; subtitle: string; price: string; badge?: string }[] = [
   launchActive()
-    ? { id: "annual", title: "Annuel", subtitle: "La 1re année, puis 49,99 €/an. Jusqu'au 31 décembre.", price: "40 €", badge: "Prix de lancement" }
-    : { id: "annual", title: "Annuel", subtitle: "Soit 4,17 €/mois, 58 % d'économie", price: "49,99 €/an", badge: "Le plus choisi" },
+    ? { id: "annual", title: "Annuel", subtitle: "La 1re année, puis 69,99 €/an. Jusqu'au 31 décembre.", price: "49,99 €", badge: "Prix de lancement" }
+    : { id: "annual", title: "Annuel", subtitle: "Soit 5,83 €/mois, 42 % d'économie", price: "69,99 €/an", badge: "Le plus choisi" },
   { id: "monthly", title: "Mensuel", subtitle: "Sans engagement", price: "9,99 €/mois" },
-  { id: "weekly", title: "Hebdomadaire", subtitle: "Pour un besoin ponctuel", price: "6,99 €/sem." },
 ];
 
 /** Identifiants produits à créer à l'identique dans App Store Connect, Google Play, RevenueCat et Stripe (« lookup key » du tarif). */
-export const PRODUCT_IDS: Record<OfferId, string> = { annual: "sw_annual_4999", monthly: "sw_monthly_999", weekly: "sw_weekly_699" };
+export const PRODUCT_IDS: Record<OfferId, string> = { annual: "sw_annual_6999", monthly: "sw_monthly_999", weekly: "sw_weekly_699" };
 export const ENTITLEMENT = "premium";
 
 /** Statuts de profiles.subscription_status qui ouvrent le plan de prévention. */
