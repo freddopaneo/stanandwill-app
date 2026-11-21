@@ -75,8 +75,10 @@ export default function Paywall() {
     setBusy(true);
     try {
       const ok = await redeemFounderCode(code.trim());
-      if (ok) { setPremium(true); router.replace("/(onboarding)/auth"); }
-      else Alert.alert("Code inconnu", "Vérifiez le code reçu par e-mail (ex. TECKEL-2026).");
+      if (ok) { setPremium(true); router.replace(WEB ? "/(tabs)/aujourdhui" : "/(onboarding)/auth"); }
+      else Alert.alert("Code inconnu", "Vérifiez le code que vous avez reçu, puis réessayez.");
+    } catch (e) {
+      if (!needAccount(e)) Alert.alert("Vérification impossible", "Réessayez dans un instant.");
     } finally { setBusy(false); }
   };
 
@@ -124,7 +126,7 @@ export default function Paywall() {
         {showCode ? (
           <Card style={{ marginTop: 16 }}>
             <P style={{ fontFamily: fonts.bold }}>Code d'invitation</P>
-            <TextInput value={code} onChangeText={setCode} autoCapitalize="characters" placeholder="TECKEL-2026" style={s.input} />
+            <TextInput value={code} onChangeText={setCode} autoCapitalize="characters" placeholder="Votre code" style={s.input} />
             <Button title="Activer" variant="secondary" onPress={redeem} loading={busy} disabled={code.trim().length < 4} />
           </Card>
         ) : (

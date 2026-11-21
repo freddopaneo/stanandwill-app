@@ -4,6 +4,7 @@
  *   - Web (PWA)     : paiement Stripe (lib/billing.web.ts)
  * Dans les deux cas, le serveur écrit le résultat dans profiles.subscription_status, seule source de vérité.
  */
+import { Platform } from "react-native";
 import { API_URL, supabase, supabaseConfigured } from "./supabase";
 
 export type OfferId = "annual" | "monthly" | "weekly";
@@ -57,8 +58,11 @@ export async function fetchSubscriptionStatus(): Promise<string | null> {
  */
 export async function redeemFounderCode(code: string): Promise<boolean> {
   if (!code) return false;
+  const headers = await authHeaders();
+  // Sur le web, le code doit être rattaché à un compte : sinon l'accès offert serait perdu au premier changement d'appareil.
+  if (Platform.OS === "web" && supabaseConfigured && !headers.authorization) throw new AccountRequiredError();
   try {
-    const r = await fetch(`${API_URL}/api/founder`, { method: "POST", headers: await authHeaders(), body: JSON.stringify({ code }) });
+    const r = await fetch(`${API_URL}/api/founder`, { method: "POST", headers, body: JSON.stringify({ code }) });
     if (r.ok) { const j = await r.json(); return Boolean(j.ok); }
   } catch {}
   return SANDBOX && /^TECKEL-\d{4}$/i.test(code);
