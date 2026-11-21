@@ -4,7 +4,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ageMonthsFrom, dailyGoal, dailyStats, streakDays, fmtDistance, fmtDuration, sizeClass, evaluateBadges, newlyEarned, weeklyChallenge, type Badge, type BadgeContext, type WalkInput, type WalkSummary } from "@stanandwill/core";
 import { useStore } from "../../lib/store";
-import { WalkTracker, manualWalk, type LiveWalk } from "../../lib/walks";
+import { WalkTracker, finishSavedWalk, manualWalk, type LiveWalk } from "../../lib/walks";
+import { clearSession, deleteTrace, loadSession, type WalkSession } from "../../lib/walkMedia";
+import { addPhoto, deletePhotos } from "../../lib/photoStore";
+import { WalkExtras } from "../../components/WalkExtras";
+import { useAppWidth } from "../../lib/layout";
+import * as ImagePicker from "expo-image-picker";
 import { Button, Card, H1, H2, P, Pill, Small } from "../../components/ui";
 import { DogSwitcher } from "../../components/DogSwitcher";
 import { colors, fonts, radius } from "../../lib/theme";
@@ -20,7 +25,9 @@ const DAY_LETTERS = ["D", "L", "M", "M", "J", "V", "S"];
 /**
  * Onglet Balades : démarrer/arrêter une balade (GPS ou minuteur), pas estimés selon la taille du chien,
  * objectif du jour, 7 derniers jours, série, historique, carte de fin de balade partageable.
- * Confidentialité : la trace GPS n'est jamais conservée ni envoyée ; seul le résumé est enregistré.
+ * Une balade en cours survit à la fermeture de l'app (reprise ou enregistrement à la réouverture).
+ * Photos pendant la balade, carte du parcours à la fin et dans l'historique.
+ * Confidentialité : tracé GPS et photos restent sur le téléphone ; seul le résumé part dans le carnet synchronisé.
  */
 export default function Balades() {
   const router = useRouter();
@@ -34,6 +41,10 @@ export default function Balades() {
   const [shareWalk, setShareWalk] = useState<WalkSummary | null>(null);
   const [sharing, setSharing] = useState(false);
   const [fresh, setFresh] = useState<Badge[]>([]);
+  const [pending, setPending] = useState<WalkSession | null>(null);
+  const [photoCount, setPhotoCount] = useState(0);
+  const [snapping, setSnapping] = useState(false);
+  const appWidth = useAppWidth();
 
   const input: WalkInput = useMemo(() => dog ? { breedId: dog.breed_id, size: dog.size, weightKg: dog.weightKg, ageMonths: ageMonthsFrom(dog.birth_month ?? undefined) } : {}, [dog]);
   const goal = useMemo(() => dailyGoal(input), [input]);
@@ -47,23 +58,59 @@ export default function Balades() {
   const badges = useMemo(() => evaluateBadges(walks, badgeCtx), [walks, badgeCtx]);
   const challenge = useMemo(() => weeklyChallenge(walks, badgeCtx), [walks, badgeCtx]);
 
-  useEffect(() => () => { tracker.current?.stop("x"); }, []);
+  // L'écran se ferme : le suivi se met en pause, la balade reste sauvegardée pour la reprise.
+  useEffect(() => () => { tracker.current?.suspend(); }, []);
+  // À l'ouverture : une balade est-elle restée en cours (app fermée sans « Terminer ») ?
+  useEffect(() => { loadSession().then((s) => { if (s && !tracker.current) setPending(s); }); }, []);
   if (!dog) return null;
 
-  const start = async () => {
-    const t = new WalkTracker(input, useGps);
+  const start = async (resume?: WalkSession) => {
+    const t = new WalkTracker(input, resume ? resume.useGps : useGps, resume ? resume.dogId : dog.id, resume);
     tracker.current = t;
+    setPending(null); setPhotoCount(0);
     t.on(setLive);
     await t.start();
   };
 
   const stop = () => {
     const t = tracker.current; if (!t) return;
-    const w = t.stop(dog.id);
+    const w = t.stop();
     tracker.current = null; setLive(null);
     if (!w) { Alert.alert("Balade trop courte", "Moins d'une minute : rien n'a été enregistré."); return; }
     record(w);
   };
+
+  /** Balade oubliée : on l'enregistre jusqu'au dernier moment où l'app était ouverte. */
+  const savePending = () => {
+    if (!pending) return;
+    const w = finishSavedWalk(pending, input);
+    setPending(null);
+    if (!w) { Alert.alert("Balade trop courte", "Moins d'une minute : rien n'a été enregistré."); return; }
+    record(w);
+  };
+
+  const dropPending = () => {
+    if (!pending) return;
+    const id = pending.walkId;
+    Alert.alert("Supprimer cette balade ?", "Elle ne sera pas enregistrée.", [{ text: "Annuler", style: "cancel" }, { text: "Supprimer", style: "destructive", onPress: () => { clearSession(); deletePhotos(id); setPending(null); } }]);
+  };
+
+  /** Photo souvenir pendant la balade : gardée sur le téléphone, rattachée à la balade en cours. */
+  const snap = async () => {
+    const t = tracker.current; if (!t || snapping) return;
+    setSnapping(true);
+    try {
+      const perm = await ImagePicker.requestCameraPermissionsAsync();
+      if (!perm.granted) { Alert.alert("Autorisation nécessaire", "Autorisez l'appareil photo pour ajouter une photo à la balade."); return; }
+      const shot = await ImagePicker.launchCameraAsync({ quality: 0.8, exif: false });
+      if (shot.canceled || !shot.assets?.[0]?.uri) return;
+      const saved = await addPhoto(t.walkId, shot.assets[0].uri);
+      if (saved) setPhotoCount((n) => n + 1);
+      else Alert.alert("Photo non enregistrée", "Réessayez dans un instant.");
+    } finally { setSnapping(false); }
+  };
+
+  const forget = (id: string) => { removeWalk(id); deleteTrace(id); deletePhotos(id); };
 
   /** Enregistre la balade et repère les badges qu'elle débloque (affichés dans la feuille de fin). */
   const record = (w: WalkSummary) => {
@@ -134,14 +181,28 @@ export default function Balades() {
               <View style={{ flex: 1 }}><Text style={s.liveSmall}>Distance</Text><Text style={s.liveVal}>{fmtDistance(live.distanceM)}</Text></View>
               <View style={{ flex: 1 }}><Text style={s.liveSmall}>Pas de {dog.name}</Text><Text style={s.liveVal}>≈ {live.stepsEst.toLocaleString("fr-FR")}</Text></View>
             </View>
-            <View style={{ marginTop: 14 }}><Button title="Terminer la balade" onPress={stop} /></View>
+            <View style={{ marginTop: 14, gap: 8 }}>
+              <Button title={photoCount ? `📷  Prendre une photo (${photoCount})` : "📷  Prendre une photo"} variant="secondary" onPress={snap} loading={snapping} />
+              <Button title="Terminer la balade" onPress={stop} />
+            </View>
+            <Text style={[s.liveSmall, { marginTop: 10 }]}>Gardez l'app ouverte pendant la balade. Si elle se ferme, votre balade vous attendra ici.</Text>
+          </Card>
+        ) : pending ? (
+          <Card style={{ marginTop: 14, borderColor: colors.miel, borderWidth: 2 }}>
+            <H2>Une balade est restée en cours</H2>
+            <Small style={{ marginTop: 4 }}>Commencée {new Date(pending.startedAt).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} à {new Date(pending.startedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}. L'app s'est fermée à {new Date(pending.lastSeen).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}, après {fmtDuration(Math.max(0, Math.floor((pending.lastSeen - pending.startedAt) / 1000)))}.</Small>
+            <View style={{ marginTop: 12, gap: 8 }}>
+              <Button title={`Enregistrer ces ${fmtDuration(Math.max(0, Math.floor((pending.lastSeen - pending.startedAt) / 1000)))}`} onPress={savePending} />
+              <Button title="Reprendre la balade" variant="secondary" onPress={() => start(pending)} />
+              <Button title="Supprimer" variant="ghost" onPress={dropPending} />
+            </View>
           </Card>
         ) : (
           <Card style={{ marginTop: 14 }}>
-            <Button title={`🐾  Démarrer une balade avec ${dog.name}`} onPress={start} />
+            <Button title={`🐾  Démarrer une balade avec ${dog.name}`} onPress={() => start()} />
             <Pressable onPress={() => setUseGps((v) => !v)} style={s.toggle} accessibilityRole="switch" accessibilityState={{ checked: useGps }}>
               <View style={[s.box, useGps && s.boxOn]}>{useGps && <Text style={{ color: colors.blanc, fontSize: 12, fontFamily: fonts.black }}>✓</Text>}</View>
-              <Small style={{ flex: 1 }}>Mesurer la distance avec le GPS (le trajet n'est jamais enregistré ni partagé)</Small>
+              <Small style={{ flex: 1 }}>Mesurer la distance avec le GPS (le parcours reste sur ce téléphone, il n'est jamais partagé)</Small>
             </Pressable>
             <Pressable onPress={() => setShowManual((v) => !v)}><Small style={{ color: colors.foret, fontFamily: fonts.bold, marginTop: 8 }}>J'ai oublié de lancer le suivi → ajouter une balade</Small></Pressable>
             {showManual && (
@@ -190,7 +251,7 @@ export default function Balades() {
           <>
             <H2 style={{ marginTop: 22 }}>Dernières balades</H2>
             {[...walks].reverse().slice(0, 12).map((w) => (
-              <Pressable key={w.id} onLongPress={() => Alert.alert("Supprimer cette balade ?", "", [{ text: "Annuler", style: "cancel" }, { text: "Supprimer", style: "destructive", onPress: () => removeWalk(w.id) }])}>
+              <Pressable key={w.id} onLongPress={() => Alert.alert("Supprimer cette balade ?", "", [{ text: "Annuler", style: "cancel" }, { text: "Supprimer", style: "destructive", onPress: () => forget(w.id) }])} onPress={() => { setFresh([]); setShareWalk(w); }}>
                 <Card style={{ marginTop: 8, paddingVertical: 12 }}>
                   <View style={s.row}>
                     <View style={{ flex: 1 }}>
@@ -204,7 +265,7 @@ export default function Balades() {
                 </Card>
               </Pressable>
             ))}
-            <Small style={{ marginTop: 8 }}>Appui long sur une balade pour la supprimer.</Small>
+            <Small style={{ marginTop: 8 }}>Touchez une balade pour revoir son parcours et ses photos. Appui long pour la supprimer.</Small>
           </>
         )}
         <Small style={{ marginTop: 22, textAlign: "center" }}>Les pas sont une estimation indicative (foulée moyenne de la race), pas une mesure médicale.</Small>
@@ -212,7 +273,7 @@ export default function Balades() {
 
       <Modal visible={!!shareWalk} animationType="slide" transparent onRequestClose={() => { setShareWalk(null); setFresh([]); }}>
         <View style={s.sheetBack}>
-          <View style={s.sheet}>
+          <ScrollView style={s.sheet} contentContainerStyle={{ paddingBottom: 34 }}>
             <H2 style={{ textAlign: "center" }}>Belle balade ! 🐾</H2>
             <Small style={{ textAlign: "center", marginTop: 4 }}>Partagez la carte de {dog.name} avec vos proches, ou gardez-la en souvenir.</Small>
             <NewBadgesBanner badges={fresh} />
@@ -224,11 +285,12 @@ export default function Balades() {
                 </View>
               </View>
             )}
+            {shareWalk ? <WalkExtras walkId={shareWalk.id} width={appWidth - 40} /> : null}
             <View style={{ marginTop: 18, gap: 8 }}>
               <Button title="Partager la carte" onPress={doShare} loading={sharing} />
               <Button title="Fermer" variant="ghost" onPress={() => { setShareWalk(null); setFresh([]); }} />
             </View>
-          </View>
+          </ScrollView>
         </View>
       </Modal>
     </SafeAreaView>
@@ -254,7 +316,7 @@ const s = StyleSheet.create({
   input: { flex: 1, borderWidth: 1.5, borderColor: colors.ligne, borderRadius: radius.md, paddingHorizontal: 14, minHeight: 50, fontFamily: fonts.regular, fontSize: 16, color: colors.texte, backgroundColor: colors.blanc },
   bar: { width: 22, borderRadius: 6 },
   sheetBack: { flex: 1, backgroundColor: "rgba(20,41,31,0.55)", justifyContent: "flex-end" },
-  sheet: { backgroundColor: colors.creme, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: 34 },
+  sheet: { backgroundColor: colors.creme, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, maxHeight: "92%", flexGrow: 0 },
   illu: { marginTop: 22, borderRadius: radius.xl, overflow: "hidden", height: 200 },
   illuImg: { width: "100%", height: 200 },
   illuShade: { position: "absolute", left: 0, right: 0, bottom: 0, height: 110, backgroundColor: "rgba(20,41,31,0.6)" },

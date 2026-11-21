@@ -41,7 +41,7 @@ export function BreedWaitlist({ breedId, dogName }: { breedId: string; dogName: 
       <Text style={s.kicker}>Plan complet {info.label} : {info.eta}</Text>
       <P style={{ marginTop: 6 }}>
         {done
-          ? `C'est noté. Vous serez prévenu dès que le plan de prévention ${info.label} est relu par notre vétérinaire, avec le tarif fondateur.`
+          ? `C'est noté. Vous serez prévenu dès que le plan de prévention ${info.label} est relu par notre vétérinaire.`
           : `Le bilan ci-dessus utilise ce que l'on sait déjà de la race. Le plan complet (score affiné, gestes hebdomadaires, signes d'alerte) arrive en ${info.eta}. Laissez votre e-mail pour être prévenu et profiter du tarif fondateur à 29,99 € la première année.`}
       </P>
       {!done ? (

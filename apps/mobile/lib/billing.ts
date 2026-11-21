@@ -5,7 +5,7 @@
  * Mise en service (étape 3) :
  *   1. npx expo install react-native-purchases          (module natif : nécessite un build EAS, pas Expo Go)
  *   2. .env : EXPO_PUBLIC_REVENUECAT_IOS_KEY / EXPO_PUBLIC_REVENUECAT_ANDROID_KEY (clés publiques SDK)
- *   3. Dans RevenueCat : entitlement `premium` ; produits sw_annual_4999 (essai 7 j), sw_monthly_999, sw_weekly_699 ; offering `default`.
+ *   3. Dans RevenueCat : entitlement `premium` ; produits sw_annual_4999 (essai gratuit de 2 mois, à régler dans chaque store), sw_monthly_999, sw_weekly_699 ; offering `default`.
  *   4. Webhook RevenueCat → https://<site>/api/revenuecat (met à jour profiles.subscription_status).
  * Tant que le module n'est pas installé ou la clé absente, les achats sont simulés en développement (SANDBOX) et refusés en production.
  */

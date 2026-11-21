@@ -1,5 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppState } from "react-native";
+import { clearAllWalkData } from "./walkMedia";
+import { deleteAllPhotos } from "./photoStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Session } from "@supabase/supabase-js";
 import { supabase, supabaseConfigured } from "./supabase";
@@ -414,6 +416,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     addEvent: (e) => { if (active && e.kind !== "gesture") track("health_event_added", { kind: e.kind }); if (active) updateRecord(active.dog.id, (r) => ({ ...r, events: [...r.events, { ...e, id: "ev-" + Date.now(), date: e.date ?? new Date().toISOString() }] })); },
     resetAll: async () => {
       await AsyncStorage.multiRemove([KEY, LEGACY_KEY]).catch(() => {});
+      // Balade en cours, tracés et photos gardés sur le téléphone : effacés eux aussi.
+      await clearAllWalkData().catch(() => {}); await deleteAllPhotos().catch(() => {});
       setA({}); setDogs([]); setActiveId(null); setPremiumState(false); setWaitlistState(null); setNotifHourState(8); setWalkHourState(18); setNotifMinuteState(0); setWalkMinuteState(0); setLastSyncAt(null); setLastSyncError(null);
     },
   }), [session, answers, dogs, active, score, premium, ready, waitlist, activeDogId, notifHour, walkHour, notifMinute, walkMinute, syncing, lastSyncAt, lastSyncError, signedIn, syncNow, pullNow]);

@@ -9,7 +9,7 @@ import { API_URL, supabase, supabaseConfigured } from "./supabase";
 export type OfferId = "annual" | "monthly" | "weekly";
 
 export const OFFERS: { id: OfferId; title: string; subtitle: string; price: string; badge?: string }[] = [
-  { id: "annual", title: "Annuel", subtitle: "7 jours d'essai gratuit · 4,17 €/mois", price: "49,99 €/an", badge: "Le plus choisi" },
+  { id: "annual", title: "Annuel", subtitle: "2 mois gratuits, puis 4,17 €/mois", price: "49,99 €/an", badge: "Le plus choisi" },
   { id: "monthly", title: "Mensuel", subtitle: "Sans engagement", price: "9,99 €/mois" },
   { id: "weekly", title: "Hebdomadaire", subtitle: "Pour un besoin ponctuel", price: "6,99 €/sem." },
 ];
@@ -51,7 +51,10 @@ export async function fetchSubscriptionStatus(): Promise<string | null> {
   } catch { return null; }
 }
 
-/** Codes fondateurs : validés côté serveur (route /api/founder). */
+/**
+ * Codes d'invitation (accès offert à des testeurs ou partenaires) : validés côté serveur.
+ * La route et le statut gardent leur nom historique « founder » ; rien de visible pour l'utilisateur.
+ */
 export async function redeemFounderCode(code: string): Promise<boolean> {
   if (!code) return false;
   try {

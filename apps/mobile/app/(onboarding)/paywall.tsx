@@ -115,20 +115,20 @@ export default function Paywall() {
         </View>
 
         <View style={{ marginTop: 18 }}>
-          <Button title={choice === "annual" ? "Commencer les 7 jours d'essai" : "Continuer"} onPress={buy} loading={busy} />
+          <Button title={choice === "annual" ? "Commencer mes 2 mois gratuits" : "Continuer"} onPress={buy} loading={busy} />
           <Small style={{ textAlign: "center", marginTop: 8 }}>
-            {choice === "annual" ? "Gratuit 7 jours, puis 49,99 €/an. Rappel la veille de la fin de l'essai. Résiliable en un geste." : WEB ? "Sans engagement, résiliable à tout moment depuis Carnet → Réglages." : "Sans engagement, résiliable à tout moment depuis les réglages du téléphone."}
+            {choice === "annual" ? "Gratuit pendant 2 mois, puis 49,99 €/an. Résiliable en un geste, à tout moment avant la fin de l'essai." : WEB ? "Sans engagement, résiliable à tout moment depuis Carnet → Réglages." : "Sans engagement, résiliable à tout moment depuis les réglages du téléphone."}
           </Small>
         </View>
 
         {showCode ? (
           <Card style={{ marginTop: 16 }}>
-            <P style={{ fontFamily: fonts.bold }}>Code fondateur</P>
+            <P style={{ fontFamily: fonts.bold }}>Code d'invitation</P>
             <TextInput value={code} onChangeText={setCode} autoCapitalize="characters" placeholder="TECKEL-2026" style={s.input} />
             <Button title="Activer" variant="secondary" onPress={redeem} loading={busy} disabled={code.trim().length < 4} />
           </Card>
         ) : (
-          <Pressable onPress={() => setShowCode(true)} style={{ marginTop: 14 }}><Small style={{ textAlign: "center", textDecorationLine: "underline" }}>J'ai un code fondateur</Small></Pressable>
+          <Pressable onPress={() => setShowCode(true)} style={{ marginTop: 14 }}><Small style={{ textAlign: "center", textDecorationLine: "underline" }}>J'ai un code d'invitation</Small></Pressable>
         )}
 
         {WEB ? <Small style={{ textAlign: "center", marginTop: 10 }}>Paiement sécurisé par Stripe : carte bancaire, Apple Pay, Google Pay.</Small> : null}
