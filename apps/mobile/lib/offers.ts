@@ -9,8 +9,14 @@ import { API_URL, supabase, supabaseConfigured } from "./supabase";
 
 export type OfferId = "annual" | "monthly" | "weekly";
 
+/** Prix de lancement : 40 € la première année sur l'annuel, jusqu'au 31 décembre 2026 inclus. Même date que côté serveur (lib/launch.ts du site). */
+export const LAUNCH_END = Date.parse("2027-01-01T00:00:00+01:00");
+export const launchActive = (now = Date.now()) => now < LAUNCH_END;
+
 export const OFFERS: { id: OfferId; title: string; subtitle: string; price: string; badge?: string }[] = [
-  { id: "annual", title: "Annuel", subtitle: "2 mois gratuits, puis 4,17 €/mois", price: "49,99 €/an", badge: "Le plus choisi" },
+  launchActive()
+    ? { id: "annual", title: "Annuel", subtitle: "La 1re année, puis 49,99 €/an. Jusqu'au 31 décembre.", price: "40 €", badge: "Prix de lancement" }
+    : { id: "annual", title: "Annuel", subtitle: "Soit 4,17 €/mois, 58 % d'économie", price: "49,99 €/an", badge: "Le plus choisi" },
   { id: "monthly", title: "Mensuel", subtitle: "Sans engagement", price: "9,99 €/mois" },
   { id: "weekly", title: "Hebdomadaire", subtitle: "Pour un besoin ponctuel", price: "6,99 €/sem." },
 ];
@@ -46,9 +52,13 @@ export async function fetchSubscriptionStatus(): Promise<string | null> {
     const { data: s } = await supabase.auth.getSession();
     const uid = s.session?.user.id;
     if (!uid) return null;
-    const { data, error } = await supabase.from("profiles").select("subscription_status").eq("id", uid).maybeSingle();
+    // select("*") : la colonne invite_expires_at n'existe qu'après la migration 0007.
+    const { data, error } = await supabase.from("profiles").select("*").eq("id", uid).maybeSingle();
     if (error) return null;
-    return (data?.subscription_status as string | undefined) ?? null;
+    const status = (data?.subscription_status as string | undefined) ?? null;
+    // Code d'invitation arrivé à son terme : l'accès offert est fini, comme un abonnement expiré.
+    if (status === "founder" && data?.invite_expires_at && Date.parse(data.invite_expires_at) <= Date.now()) return "expired";
+    return status;
   } catch { return null; }
 }
 
@@ -56,14 +66,22 @@ export async function fetchSubscriptionStatus(): Promise<string | null> {
  * Codes d'invitation (accès offert à des testeurs ou partenaires) : validés côté serveur.
  * La route et le statut gardent leur nom historique « founder » ; rien de visible pour l'utilisateur.
  */
-export async function redeemFounderCode(code: string): Promise<boolean> {
-  if (!code) return false;
+export type InviteResult = { ok: boolean; reason?: "unknown" | "full" | "already_used" | "error"; days?: number };
+
+export async function redeemFounderCode(code: string): Promise<InviteResult> {
+  if (!code) return { ok: false, reason: "unknown" };
   const headers = await authHeaders();
   // Sur le web, le code doit être rattaché à un compte : sinon l'accès offert serait perdu au premier changement d'appareil.
   if (Platform.OS === "web" && supabaseConfigured && !headers.authorization) throw new AccountRequiredError();
   try {
     const r = await fetch(`${API_URL}/api/founder`, { method: "POST", headers, body: JSON.stringify({ code }) });
-    if (r.ok) { const j = await r.json(); return Boolean(j.ok); }
-  } catch {}
-  return SANDBOX && /^TECKEL-\d{4}$/i.test(code);
+    if (r.status === 401) throw new AccountRequiredError();
+    const j = await r.json().catch(() => ({}));
+    if (j.ok) return { ok: true, days: j.days };
+    if (j.reason === "unknown" || j.reason === "full" || j.reason === "already_used") return { ok: false, reason: j.reason };
+    return { ok: false, reason: "error" };
+  } catch (e) {
+    if (e instanceof AccountRequiredError) throw e;
+  }
+  return SANDBOX && /^TECKEL-\d{4}$/i.test(code) ? { ok: true } : { ok: false, reason: "error" };
 }

@@ -74,9 +74,16 @@ export default function Paywall() {
   const redeem = async () => {
     setBusy(true);
     try {
-      const ok = await redeemFounderCode(code.trim());
-      if (ok) { setPremium(true); router.replace(WEB ? "/(tabs)/aujourdhui" : "/(onboarding)/auth"); }
-      else Alert.alert("Code inconnu", "Vérifiez le code que vous avez reçu, puis réessayez.");
+      const res = await redeemFounderCode(code.trim());
+      if (res.ok) {
+        setPremium(true);
+        if (res.days) Alert.alert("Accès offert", `Le plan complet est ouvert pendant ${res.days} jours, sans carte bancaire.`);
+        router.replace(WEB ? "/(tabs)/aujourdhui" : "/(onboarding)/auth");
+      }
+      else if (res.reason === "full") Alert.alert("Code épuisé", "Ce code a déjà été utilisé le nombre de fois prévu.");
+      else if (res.reason === "already_used") Alert.alert("Code déjà utilisé", "Un code d'invitation a déjà été utilisé sur ce compte.");
+      else if (res.reason === "unknown") Alert.alert("Code inconnu", "Vérifiez le code que vous avez reçu, puis réessayez.");
+      else Alert.alert("Vérification impossible", "Réessayez dans un instant.");
     } catch (e) {
       if (!needAccount(e)) Alert.alert("Vérification impossible", "Réessayez dans un instant.");
     } finally { setBusy(false); }
@@ -117,9 +124,9 @@ export default function Paywall() {
         </View>
 
         <View style={{ marginTop: 18 }}>
-          <Button title={choice === "annual" ? "Commencer mes 2 mois gratuits" : "Continuer"} onPress={buy} loading={busy} />
+          <Button title="M'abonner" onPress={buy} loading={busy} />
           <Small style={{ textAlign: "center", marginTop: 8 }}>
-            {choice === "annual" ? "Gratuit pendant 2 mois, puis 49,99 €/an. Résiliable en un geste, à tout moment avant la fin de l'essai." : WEB ? "Sans engagement, résiliable à tout moment depuis Carnet → Réglages." : "Sans engagement, résiliable à tout moment depuis les réglages du téléphone."}
+            {WEB ? "Satisfait ou remboursé pendant 14 jours. Sans engagement, résiliable à tout moment depuis Carnet → Réglages." : "Sans engagement, résiliable à tout moment depuis les réglages du téléphone."}
           </Small>
         </View>
 
